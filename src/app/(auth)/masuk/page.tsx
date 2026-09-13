@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PrivyLoginButton } from "@/components/auth/privy-login-button";
 
 export const metadata: Metadata = { title: "Masuk Petugas" };
 
@@ -48,13 +49,7 @@ export default function MasukPage() {
             data-privy-login=""
             className="min-h-[220px] rounded-xl border border-border bg-card p-6"
           >
-            <p className="text-sm text-ink-muted">
-              Tombol login Privy dirender di sini setelah
-              <code className="mx-1 rounded bg-surface-muted px-1 py-0.5 font-mono text-xs">
-                NEXT_PUBLIC_PRIVY_APP_ID
-              </code>
-              dikonfigurasi.
-            </p>
+            <PrivyLoginButton />
           </div>
           <p className="text-xs text-ink-muted leading-relaxed">
             MetaMask tidak diperlukan. Dompet tertanam dibuat otomatis untuk akun internal yang

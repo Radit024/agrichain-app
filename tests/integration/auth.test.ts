@@ -35,6 +35,11 @@ vi.mock("@/server/auth/privy", async (importOriginal) => {
 // server-only guard membuat error di vitest → mock kosongkan efeknya
 vi.mock("server-only", () => ({}));
 
+it("exports the Privy login control", async () => {
+  const loginControl = await import("@/components/auth/privy-login-button");
+  expect(loginControl.PrivyLoginButton).toBeTypeOf("function");
+});
+
 import {
   requireSession,
   requireRole,
