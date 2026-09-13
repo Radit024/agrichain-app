@@ -1,9 +1,8 @@
-"use server";
-
 import { hash, verify } from "@node-rs/argon2";
 import { randomBytes } from "node:crypto";
 import { z } from "zod";
 import type { PGlite } from "@electric-sql/pglite";
+import type { Session } from "../auth/session";
 
 /**
  * Undangan & aktivasi akun internal (IMPLEMENTATION-PLAN §6.2) — invite-only.
@@ -34,7 +33,7 @@ export class InviteError extends Error {
   }
 }
 
-const createInviteSchema = z.object({
+export const createInviteSchema = z.object({
   email: z.string().email(),
   orgId: z.string().uuid(),
   role: z.enum([
@@ -47,6 +46,12 @@ const createInviteSchema = z.object({
   createdByUserId: z.string().uuid(),
   ttlHours: z.number().int().min(1).max(168).default(48),
 });
+
+const administratorRoles = new Set<Session["memberships"][number]["role"]>([
+  "PRODUCER_ADMIN",
+  "DISTRIBUTOR_ADMIN",
+  "RETAILER_ADMIN",
+]);
 
 export interface CreatedInvite {
   invitationId: string;
@@ -68,7 +73,8 @@ export async function createInvitation(input: unknown, db: DbAdapter): Promise<C
      on conflict (email, org_id, role) do update set
        invitation_token_hash = excluded.invitation_token_hash,
        expires_at = excluded.expires_at,
-       accepted_at = null
+       accepted_at = null,
+       revoked_at = null
      returning id`,
     [
       parsed.email,
@@ -84,6 +90,49 @@ export async function createInvitation(input: unknown, db: DbAdapter): Promise<C
     rawToken,
     expiresAt,
   };
+}
+
+/** Authorised facade for HTTP/server callers; never trusts a submitted creator id. */
+export async function createManagedInvitation(
+  input: Omit<z.infer<typeof createInviteSchema>, "createdByUserId">,
+  db: DbAdapter,
+  session: Session,
+): Promise<CreatedInvite> {
+  const parsed = createInviteSchema.omit({ createdByUserId: true }).parse(input);
+  if (
+    !session.memberships.some(
+      (membership) => membership.orgId === parsed.orgId && administratorRoles.has(membership.role),
+    )
+  ) {
+    throw new InviteError("INVALID");
+  }
+  return createInvitation({ ...parsed, createdByUserId: session.user.id }, db);
+}
+
+/** An administrator in the invitation organisation may invalidate an unused invitation. */
+export async function revokeInvitation(
+  invitationId: string,
+  db: DbAdapter,
+  session: Session,
+): Promise<void> {
+  const rows = await db.query<{
+    org_id: string;
+    accepted_at: string | null;
+    revoked_at: string | null;
+  }>("select org_id, accepted_at, revoked_at from invitations where id = $1", [invitationId]);
+  const invitation = rows[0];
+  if (
+    !invitation ||
+    invitation.accepted_at ||
+    invitation.revoked_at ||
+    !session.memberships.some(
+      (m) => m.orgId === invitation.org_id && administratorRoles.has(m.role),
+    )
+  )
+    throw new InviteError("INVALID");
+  await db.query("update invitations set revoked_at = now() where id = $1 and revoked_at is null", [
+    invitationId,
+  ]);
 }
 
 export interface ActivationInput {
@@ -121,7 +170,7 @@ export async function acceptInvitation(
     email: string;
   }>(
     `select id, org_id, role, invitation_token_hash, expires_at, accepted_at, email
-     from invitations where lower(email) = lower($1) and accepted_at is null`,
+     from invitations where lower(email) = lower($1) and accepted_at is null and revoked_at is null`,
     [parsed.email],
   );
 

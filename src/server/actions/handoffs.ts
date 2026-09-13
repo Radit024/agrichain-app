@@ -55,6 +55,7 @@ function senderRoleForStage(session: Session, stage: number): boolean {
 export interface HandoffIntentResult {
   intentId: string;
   idempotencyKey: string;
+  transactionReferenceId: string;
   expiresAt: Date;
 }
 
@@ -131,18 +132,19 @@ export async function initiateHandoff(
       expiresAt.toISOString(),
     ],
   );
-  await db.query(
+  const reference = await db.query<{ id: string }>(
     `insert into transaction_references (batch_id, intent_id, event_type, idempotency_key, submitted_by)
-     values ($1,$2,'HANDOFF_INITIATED',$3,$4)`,
+     values ($1,$2,'HANDOFF_INITIATED',$3,$4) returning id`,
     [batchId, intentId, idempotencyKey, session.user.id],
   );
-  return { intentId, idempotencyKey, expiresAt };
+  return { intentId, idempotencyKey, transactionReferenceId: reference[0].id, expiresAt };
 }
 
 export interface ConfirmResult {
   intentId: string;
   newStage: number;
   distributionStatus: string;
+  transactionReferenceId: string;
 }
 
 /** Penerima menkonfirmasi → stage & kustodian berpindah, record tersimpan. */
@@ -224,12 +226,17 @@ export async function confirmHandoff(
       intent.recipient_wallet,
     ],
   );
-  await db.query(
+  const reference = await db.query<{ id: string }>(
     `insert into transaction_references (batch_id, intent_id, event_type, idempotency_key, submitted_by)
-     values ($1,$2,'HANDOFF_CONFIRMED',$3,$4)`,
+     values ($1,$2,'HANDOFF_CONFIRMED',$3,$4) returning id`,
     [batchId, intent.id, `handoff-confirm:${intent.id}`, session.user.id],
   );
-  return { intentId: intent.id, newStage, distributionStatus: dist };
+  return {
+    intentId: intent.id,
+    newStage,
+    distributionStatus: dist,
+    transactionReferenceId: reference[0].id,
+  };
 }
 
 /** Pengirim membatalkan intent PENDING. */
@@ -237,7 +244,7 @@ export async function cancelHandoff(
   batchId: string,
   db: DbAdapter,
   session: Session,
-): Promise<void> {
+): Promise<{ transactionReferenceId: string }> {
   const intents = await db.query<{
     id: string;
     sender_wallet: string;
@@ -266,11 +273,12 @@ export async function cancelHandoff(
     "update handoff_intents set status = 'CANCELLED', cancelled_at = now() where id = $1",
     [intent!.id],
   );
-  await db.query(
+  const reference = await db.query<{ id: string }>(
     `insert into transaction_references (batch_id, intent_id, event_type, idempotency_key, submitted_by)
-     values ($1,$2,'HANDOFF_CANCELLED',$3,$4)`,
+     values ($1,$2,'HANDOFF_CANCELLED',$3,$4) returning id`,
     [batchId, intent!.id, `handoff-cancel:${intent!.id}`, session.user.id],
   );
+  return { transactionReferenceId: reference[0].id };
 }
 
 /** Cron: tandai intent PENDING lewat expiry → EXPIRED (job terjadwal). */

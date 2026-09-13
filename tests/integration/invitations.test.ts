@@ -1,12 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import type { PGlite } from "@electric-sql/pglite";
 import { createTestDb, asService } from "../helpers/pglite";
-import {
-  createInvitation,
-  acceptInvitation,
-  InviteError,
-  pgliteAdapter,
-} from "@/server/actions/invitations";
+import { createInvitation, acceptInvitation, pgliteAdapter } from "@/server/actions/invitations";
 import { verify } from "@node-rs/argon2";
 
 vi.mock("server-only", () => ({}));

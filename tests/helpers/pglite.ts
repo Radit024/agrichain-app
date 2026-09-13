@@ -3,7 +3,11 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const MIGRATIONS = ["0001_core_schema.sql", "0002_rls_grants.sql"];
+const MIGRATIONS = [
+  "0001_core_schema.sql",
+  "0002_rls_grants.sql",
+  "0003_invitation_revocation.sql",
+];
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 
 /**

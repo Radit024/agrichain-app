@@ -31,6 +31,7 @@ export interface VerifyAccessResult {
 
 /** Respon error aman (anti-enumeration): kode sama untuk semua kegagalan verifikasi. */
 export function safeVerifyError(_code?: string): VerifyAccessResult {
+  void _code;
   return { result: "TIDAK_SAH", reason: "Verifikasi tidak berhasil. Periksa data dan coba lagi." };
 }
 

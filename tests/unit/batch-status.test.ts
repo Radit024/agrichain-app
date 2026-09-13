@@ -128,9 +128,9 @@ describe("batch-status: handoff dua konfirmasi — seluruh test-vectors (§3.3 +
 describe("batch-status: invarian pemisahan dimensi (§3.3)", () => {
   it("transisi distribusi valid hanya via konfirmasi handoff", () => {
     const t = vectors.distributionTransitions;
-    for (const v of t.valid) {
+    t.valid.forEach(() => {
       expect(canDistributionChange("HANDOFF_CONFIRMED")).toBe(true);
-    }
+    });
     expect(canDistributionChange("EVALUATE_CONDITION")).toBe(false);
     expect(canDistributionChange("DATA_QUALITY_UPDATE")).toBe(false);
   });

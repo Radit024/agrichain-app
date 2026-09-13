@@ -32,6 +32,7 @@ export interface RegisterBatchResult {
   publicId: string;
   chainBatchKey: string;
   idempotencyKey: string;
+  transactionReferenceId: string;
   profileSnapshot: unknown;
 }
 
@@ -136,8 +137,8 @@ export async function registerBatch(
   const idempotencyKey = `batch-register:${orgId}:${batchCode}`;
 
   // idempotent: bila pernah dibuat (unik idempotency), kembalikan yang ada
-  const existingTx = await db.query<{ batch_id: string }>(
-    `select batch_id from transaction_references where idempotency_key = $1`,
+  const existingTx = await db.query<{ id: string; batch_id: string }>(
+    `select id, batch_id from transaction_references where idempotency_key = $1`,
     [idempotencyKey],
   );
   if (existingTx.length > 0) {
@@ -154,6 +155,7 @@ export async function registerBatch(
       publicId: b[0].public_id,
       chainBatchKey: b[0].chain_batch_key,
       idempotencyKey,
+      transactionReferenceId: existingTx[0].id,
       profileSnapshot: b[0].profile_snapshot,
     };
   }
@@ -175,11 +177,18 @@ export async function registerBatch(
       chainBatchKey,
     ],
   );
-  await db.query(
+  const reference = await db.query<{ id: string }>(
     `insert into transaction_references (batch_id, event_type, idempotency_key, submitted_by)
-     values ($1,'BATCH_REGISTERED',$2,$3)`,
+     values ($1,'BATCH_REGISTERED',$2,$3) returning id`,
     [batchId, idempotencyKey, session.user.id],
   );
 
-  return { batchId, publicId, chainBatchKey, idempotencyKey, profileSnapshot: snapshot };
+  return {
+    batchId,
+    publicId,
+    chainBatchKey,
+    idempotencyKey,
+    transactionReferenceId: reference[0].id,
+    profileSnapshot: snapshot,
+  };
 }

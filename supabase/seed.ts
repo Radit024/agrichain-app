@@ -58,7 +58,11 @@ async function main() {
       end if;
     end $$;
   `);
-  for (const file of ["0001_core_schema.sql", "0002_rls_grants.sql"]) {
+  for (const file of [
+    "0001_core_schema.sql",
+    "0002_rls_grants.sql",
+    "0003_invitation_revocation.sql",
+  ]) {
     const sql = await readFile(path.resolve(HERE, "migrations", file), "utf8");
     await db.exec(sql);
   }
