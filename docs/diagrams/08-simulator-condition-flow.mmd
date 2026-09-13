@@ -1,0 +1,16 @@
+flowchart LR
+    subgraph Worker["Worker simulator (node-cron, no-overlap)"]
+        G["generateReading<br/>deterministik (seed, tick)"]
+    end
+    subgraph Mode
+        CC["COLD_CHAIN<br/>NORMAL · AT_BOUNDARY · DOOR_OPEN · COOLING_FAILURE · RECOVERY · SENSOR_OFFLINE"]
+        NC["NON_COLD_CHAIN<br/>NORMAL · HIGH_HUMIDITY · SHOCK_EVENT · ROUTE_DELAY · SENSOR_OFFLINE"]
+    end
+    G --> CC & NC
+    CC & NC -->|"POST /api/conditions/ingest<br/>x-simulator-key"| API["Validasi key + Zod + idempotency"]
+    API --> STORE["condition_readings + condition_measurements<br/>source=SIMULATOR"]
+    STORE --> EVAL["evaluateCondition (modul murni)<br/>snapshot profil batch"]
+    EVAL --> ST{"Hasil"}
+    ST -->|COMPLIANT/AT_RISK| CHAIN["recordCondition on-chain (EVALUATOR)"]
+    ST -->|DATA_UNAVAILABLE / alert| OFF["Tetap off-chain"]
+    EVAL --> SAVE["condition_evaluations + status batch"]

@@ -1,0 +1,23 @@
+meta {
+  name: public-batch-valid
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{host}}/api/public/batch/AG23-7QXB-KF4M-9R2T
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: equal 200
+  res.body.publicId: equal AG23-7QXB-KF4M-9R2T
+  res.body.source: equal SIMULATOR
+}
+
+docs {
+  # Batch publik valid
+  Ringkasan tersanitasi untuk halaman QR publik.
+  Hanya field whitelist; tanpa data internal.
+}

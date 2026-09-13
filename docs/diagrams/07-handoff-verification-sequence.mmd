@@ -1,0 +1,23 @@
+sequenceDiagram
+    participant Snd as Pengirim (kustodian)
+    participant Rec as Penerima
+    participant N as Next.js
+    participant DB as Supabase
+    participant C as Kontrak
+
+    Note over Snd,Rec: Serah-terima dua konfirmasi (K7)
+    Snd->>N: initiateHandoff (batch, recipientWallet, org)
+    N->>DB: cek kustodian + stage + role (batch-status)
+    N->>DB: insert handoff_intents (PENDING, idempotency)
+    Rec->>N: confirmHandoff (batch)
+    N->>DB: validasi wallet penerima + expiry
+    N->>DB: atomik: intent CONFIRMED + stage/kustodian baru + handoff_records
+    N->>C: (embedded wallet) HandoffConfirmed on-chain
+    Note over Rec,DB: Verifikasi akses petugas
+    Rec->>N: POST /api/access/verify (publicId, code, locationId)
+    N->>DB: rate-limit IP/DID/publicId + point assignment
+    N->>DB: verify Argon2id hash (kode tidak pernah disimpan)
+    N->>N: classifyAccess → SAH/TIDAK_SAH/ANOMALI
+    N->>DB: insert access_attempts (semua hasil)
+    N->>C: recordValidAccess — HANYA SAH per-event (K8)
+    N-->>Rec: { result, publicReason } (internalDetail tetap off-chain)

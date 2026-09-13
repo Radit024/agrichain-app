@@ -44,3 +44,11 @@ next-env.d.ts
 
 cache-hardhat/
 artifacts/
+
+# log debug lokal
+*.txt.bak
+auth-out.txt
+vitest-out*.txt
+server-*.log
+test-results/
+playwright-report/

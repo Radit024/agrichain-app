@@ -1,0 +1,18 @@
+flowchart TB
+    User([Pengguna internal / Konsumen])
+    App["Aplichain App<br/>(Next.js server-based modular monolith)"]
+
+    User -->|browser| App
+    subgraph Eksternal
+        Privy["Privy Auth<br/>(social/email + embedded wallet)"]
+        SB["Supabase Postgres<br/>(data off-chain + RLS)"]
+        Amoy["Smart contract AgrichainLedger<br/>(Polygon Amoy testnet)"]
+        Sim["Worker simulator (node-cron)<br/>sumber SIMULATOR"]
+    end
+
+    App <-->|verify access token| Privy
+    App <-->|service-role SQL| SB
+    App <-->|ethers: mutasi & event| Amoy
+    Sim -->|POST /api/conditions/ingest<br/>x-simulator-key| App
+    App -->|riwayat tersanitasi| QR["QR public_id<br/>{APP_URL}/p/{id}"]
+    QR -->|pindai| User

@@ -1,0 +1,43 @@
+erDiagram
+    orgs ||--o{ product_categories : has
+    product_categories ||--o{ monitoring_profiles : versioned
+    monitoring_profiles ||--o{ profile_parameter_rules : rules
+    monitoring_parameter_definitions ||--o{ profile_parameter_rules : defines
+    orgs ||--o{ memberships : owns
+    app_users ||--o{ memberships : has
+    app_users ||--o{ point_assignments : assigned
+    orgs ||--o{ distribution_points : operates
+    distribution_points ||--o{ distribution_point_schedules : schedules
+    distribution_points ||--o{ point_assignments : targets
+    orgs ||--o{ batches : owns
+    product_categories ||--o{ batches : classifies
+    monitoring_profiles ||--o{ batches : "snapshot at registration"
+    batches ||--o{ access_codes : "hashed"
+    batches ||--o{ condition_readings : receives
+    condition_readings ||--o{ condition_measurements : values
+    batches ||--o{ condition_evaluations : evaluated
+    batches ||--o{ handoff_intents : "two-party PENDING"
+    handoff_intents ||--o{ handoff_records : confirmed
+    batches ||--o{ transaction_references : "chainSyncStatus"
+    batches ||--o{ access_attempts : logs
+    orgs ||--o{ invitations : invite-only
+    app_users {
+        uuid id PK
+        text privy_did UK
+        text wallet_address UK
+        bool mfa_verified
+    }
+    batches {
+        uuid id PK
+        text batch_code UK
+        text public_id UK
+        text distribution_status
+        text condition_status
+        text data_quality_status
+        int custody_stage
+        jsonb profile_snapshot
+    }
+    handoff_intents {
+        text status "PENDING/CONFIRMED/CANCELLED/EXPIRED"
+        text idempotency_key UK
+    }

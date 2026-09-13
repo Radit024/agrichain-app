@@ -1,0 +1,35 @@
+graph TB
+    subgraph Aktor
+        PA[Administrator Produsen]
+        PF[Petugas Pabrik]
+        DA[Administrator Distributor]
+        RA[Administrator Retailer]
+        AG[Petugas Lapangan]
+        KO[Konsumen]
+        CA[Administrator Kontrak]
+        SIM[Worker Simulator]
+    end
+
+    subgraph Sistem["Sistem Agrichain"]
+        UC1[Kelola kategori & profil monitoring berversi]
+        UC2[Daftarkan batch + hasil QR]
+        UC3[Undang & tetapkan peran internal]
+        UC4[Catat serah-terima dua konfirmasi]
+        UC5[Jadwal & kode otorisasi titik]
+        UC6[Pindai QR + verifikasi akses]
+        UC7[Lihat halaman publik batch]
+        UC8[Kirim pembacaan kondisi SIMULATOR]
+        UC9[Pause/unpause kontrak]
+    end
+
+    PA --> UC1
+    PA --> UC2
+    PA --> UC3
+    PA --> UC5
+    PF --> UC2
+    DA --> UC4
+    RA --> UC4
+    AG --> UC6
+    KO --> UC7
+    CA --> UC9
+    SIM --> UC8

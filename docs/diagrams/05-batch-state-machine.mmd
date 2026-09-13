@@ -1,0 +1,19 @@
+stateDiagram-v2
+    direction LR
+    state "distribution_status" as dist {
+        [*] --> DIDAFTARKAN : registerBatch
+        DIDAFTARKAN --> DALAM_DISTRIBUSI : konfirmasi handoff 0→1
+        DALAM_DISTRIBUSI --> SELESAI : konfirmasi handoff 1→2
+    }
+    state "condition_status (independen)" as cond {
+        [*] --> NOT_EVALUATED
+        NOT_EVALUATED --> COMPLIANT : evaluasi data tercatat
+        NOT_EVALUATED --> AT_RISK : evaluasi data tercatat
+        COMPLIANT --> AT_RISK : evaluasi berikut
+        AT_RISK --> COMPLIANT : evaluasi berikut
+    }
+    state "data_quality_status (independen)" as dq {
+        [*] --> AVAILABLE
+        AVAILABLE --> DATA_UNAVAILABLE : bacaan stale
+        DATA_UNAVAILABLE --> AVAILABLE : bacaan baru
+    }

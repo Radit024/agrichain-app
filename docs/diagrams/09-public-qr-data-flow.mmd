@@ -1,0 +1,19 @@
+flowchart TB
+    QR["QR berisi URL<br/>{APP_URL}/p/{public_id}"]
+    H["Halaman /p/[publicId] (tanpa login/dompet)"]
+    API["GET /api/public/batch/[publicId]"]
+    RL["Rate limit 60/menit/IP<br/>respons 429 netral"]
+    PROJ["Proyeksi tersanitasi<br/>(service-role)"]
+    DB[("batches + handoff_records")]
+
+    QR -->|pindai| H
+    H --> API
+    API --> RL
+    RL -->|lolos| PROJ
+    RL -->|terbatas| N429["429: Terlalu banyak permintaan"]
+    PROJ --> DB
+    PROJ -->|hanya kolom whitelist| H
+    H --> LIM["Disclosure 'Batasan informasi'<br/>+ label SIMULATOR"]
+    DB -.->|tidak dikenal| N404["404 netral: Batch tidak tersedia"]
+    style LIM fill:#E2F0FA
+    style N404 fill:#FDE7E5

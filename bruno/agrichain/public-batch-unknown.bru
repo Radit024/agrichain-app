@@ -1,0 +1,21 @@
+meta {
+  name: public-batch-unknown
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{host}}/api/public/batch/ZZZZ-ZZZZ-ZZZZ-ZZZZ
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: equal 404
+  res.body.error: equal Batch tidak tersedia untuk ditampilkan.
+}
+
+docs {
+  # 404 netral
+  Respons identik untuk format salah vs tidak ada — anti-enumerasi.
+}

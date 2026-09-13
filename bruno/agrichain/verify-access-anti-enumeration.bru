@@ -1,0 +1,35 @@
+meta {
+  name: verify-access-anti-enumeration
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{host}}/api/access/verify
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "publicId": "AG23-7QXB-KF4M-9R2T",
+    "code": "kode-tidak-valid-123456",
+    "locationId": "77777777-7777-7777-7777-777777777771"
+  }
+}
+
+assert {
+  res.status: equal 401
+}
+
+script:post-response {
+  // Tanpa sesi Privy → 401; respons TIDAK membocorkan validitas kode.
+  console.log("Tanpa sesi:", res.body.reason);
+}
+
+docs {
+  # Verifikasi akses — guard sesi
+  401 tanpa token Privy. Respons rate-limit/verifikasi selalu netral.
+  Skenario manual lengkap (SAH/TIDAK_SAH/ANOMALI) dijalankan dengan
+  sesi petugas aktif — lihat docs/tests.
+}

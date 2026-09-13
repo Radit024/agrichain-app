@@ -1,0 +1,21 @@
+sequenceDiagram
+    participant U as Admin Produsen (browser)
+    participant P as Privy
+    participant N as Next.js Server Action
+    participant S as Supabase
+    participant W as Embedded Wallet
+    participant C as AgrichainLedger (Amoy)
+
+    U->>P: login social/email
+    P-->>U: access token
+    U->>N: registerBatch (categoryId, profileId, batchCode)
+    N->>P: verifyAccessToken
+    N->>S: cek role/org + kategori & profil milik org
+    N->>S: insert batches (public_id, profile_snapshot, chainSyncStatus=PENDING) + transaction_references (idempotency)
+    N-->>U: { batchId, publicId, idempotencyKey }
+    U->>W: sign registerBatch(batchKey, publicIdHash)
+    W->>C: registerBatch (REGISTRAR_ROLE)
+    C-->>W: tx hash + event BatchRegistered
+    U->>N: confirmChainWrite(txHash)
+    N->>S: update transaction_references → CONFIRMED
+    Note over N,C: Bila callback gagal: worker reconcile membaca receipt dan mengkonfirmasi tanpa tx baru

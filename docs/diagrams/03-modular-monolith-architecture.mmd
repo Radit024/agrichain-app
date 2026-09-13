@@ -1,0 +1,25 @@
+flowchart TB
+    subgraph Next["Satu aplikasi Next.js (server-based)"]
+        UI["App Router<br/>Server Components + Client"]
+        RH["Route Handlers (Node runtime)<br/>/api/public /api/access /api/conditions /api/auth"]
+        SA["Server Actions<br/>register/handoff/invite"]
+        DAL["Data Access Layer<br/>session, rate-limit, audit, chain"]
+        DOM["Modul domain murni TS<br/>condition-policy · batch-status · access-verification · public-id · fixed-point"]
+        DBA["DbAdapter → Supabase / PGlite dev"]
+    end
+
+    UI --> SA
+    UI --> RH
+    SA --> DAL
+    RH --> DAL
+    DAL --> DOM
+    DAL --> DBA
+    subgraph Luar["Luar lifecycle request"]
+        WK["Workers: simulator (node-cron) · reconcile · expireHandoffs"]
+    end
+    WK -->|HTTP internal terautentikasi| RH
+    subgraph Chain["Chain layer"]
+        CT["AgrichainLedger.sol"]
+        EV["Evaluator wallet backend"]
+    end
+    DAL --> EV --> CT

@@ -1,0 +1,23 @@
+meta {
+  name: health-and-headers
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{host}}/p/AG23-7QXB-KF4M-9R2T
+  body: none
+  auth: none
+}
+
+assert {
+  res.headers.x-frame-options: equal DENY
+  res.headers.x-content-type-options: equal nosniff
+  res.headers.referrer-policy: equal strict-origin-when-cross-origin
+  res.status: equal 200
+}
+
+docs {
+  # Security headers (Fase K)
+  CSP, HSTS, X-Frame-Options DENY aktif di semua halaman.
+}

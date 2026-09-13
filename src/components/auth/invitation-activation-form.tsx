@@ -19,9 +19,11 @@ export function InvitationActivationForm({ invitationToken }: { invitationToken:
   async function activate() {
     setPending(true);
     setMessage(null);
+
     try {
       const accessToken = await getAccessToken();
       if (!accessToken) throw new Error("Sesi Privy belum tersedia.");
+
       const wallet = getEmbeddedConnectedWallet(wallets);
       const response = await fetch("/api/invitations/activate", {
         method: "POST",
@@ -34,6 +36,7 @@ export function InvitationActivationForm({ invitationToken }: { invitationToken:
         }),
       });
       if (!response.ok) throw new Error("Undangan tidak dapat diaktivasi.");
+
       router.replace("/dashboard");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Undangan tidak dapat diaktivasi.");
@@ -42,14 +45,21 @@ export function InvitationActivationForm({ invitationToken }: { invitationToken:
     }
   }
 
-  if (!process.env.NEXT_PUBLIC_PRIVY_APP_ID)
-    return <p className="text-sm text-ink-muted">Konfigurasi login belum tersedia.</p>;
-  if (!authenticated)
+  if (!process.env.NEXT_PUBLIC_PRIVY_APP_ID) {
     return (
-      <Button className="w-full" onClick={login}>
-        Masuk untuk melanjutkan
+      <p className="rounded-lg border border-border bg-surface-muted px-3 py-2.5 text-sm leading-5 text-ink-muted">
+        Konfigurasi login belum tersedia.
+      </p>
+    );
+  }
+
+  if (!authenticated) {
+    return (
+      <Button className="h-10 w-full" onClick={login}>
+        Lanjutkan dengan email atau Google
       </Button>
     );
+  }
 
   return (
     <form
@@ -59,32 +69,41 @@ export function InvitationActivationForm({ invitationToken }: { invitationToken:
         void activate();
       }}
     >
-      <div className="grid gap-2">
-        <Label htmlFor="activation-name">Nama tampilan</Label>
+      <div className="grid gap-1.5">
+        <Label className="text-xs font-medium text-ink" htmlFor="activation-name">
+          Nama tampilan
+        </Label>
         <Input
+          className="h-10"
           id="activation-name"
-          value={displayName}
           onChange={(event) => setDisplayName(event.target.value)}
           required
+          value={displayName}
         />
       </div>
-      <div className="grid gap-2">
-        <Label htmlFor="activation-email">Email undangan</Label>
+      <div className="grid gap-1.5">
+        <Label className="text-xs font-medium text-ink" htmlFor="activation-email">
+          Email undangan
+        </Label>
         <Input
+          className="h-10"
           id="activation-email"
-          type="email"
-          value={email}
           onChange={(event) => setEmail(event.target.value)}
           required
+          type="email"
+          value={email}
         />
       </div>
       {message ? (
-        <p className="text-sm text-destructive" role="alert">
+        <p
+          className="rounded-lg border border-danger/30 bg-danger-soft px-3 py-2.5 text-sm leading-5 text-ink"
+          role="alert"
+        >
           {message}
         </p>
       ) : null}
-      <Button className="w-full" type="submit" disabled={pending}>
-        {pending ? "Mengaktivasi…" : "Aktivasi akun"}
+      <Button className="h-10 w-full" disabled={pending} type="submit">
+        {pending ? "Mengaktifkan akun…" : "Aktifkan akun"}
       </Button>
     </form>
   );

@@ -1,0 +1,28 @@
+flowchart TB
+    subgraph Dev["Mesin pengembang (Windows/npm)"]
+        NPX["npm ci"]
+        DEV["next dev :3000"]
+        VIT["Vitest (unit + integration PGlite)"]
+        HH["Hardhat (compile + test EDR)"]
+        SEED["supabase/seed.ts → .pglite/agrichain.db"]
+        SIM["npm run simulator (node-cron)"]
+        PW["Playwright E2E publik+guard"]
+    end
+    subgraph Local["Opsional tanpa Docker"]
+        PG["PGlite Postgres WASM"]
+    end
+    subgraph Docker["Opsional"]
+        SBL["Supabase local (docker compose) :54321"]
+    end
+    subgraph Cloud["Layanan eksternal"]
+        PR["Privy dashboard"]
+        AM["Polygon Amoy RPC<br/>deploy via hardhat run scripts/deploy-amoy.ts"]
+    end
+    NPX --> DEV & VIT & HH & SIM & PW
+    DEV --> PG
+    VIT --> PG
+    SEED --> PG
+    DEV -.-> SBL
+    SIM -->|localhost:3000| DEV
+    HH --> AM
+    DEV --> PR
