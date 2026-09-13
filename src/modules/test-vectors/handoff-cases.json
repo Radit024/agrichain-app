@@ -1,0 +1,245 @@
+{
+  "$comment": "Kasus serah-terima dua konfirmasi (IMPLEMENTATION-PLAN §3.3 + §3.6). Status: distribusi/kondisi/kualitas data terpisah; evaluator tidak boleh mengubah distribusi.",
+  "distributionTransitions": {
+    "valid": [
+      { "from": "DIDAFTARKAN", "event": "HANDOFF_CONFIRMED_0_TO_1", "to": "DALAM_DISTRIBUSI" },
+      { "from": "DALAM_DISTRIBUSI", "event": "HANDOFF_CONFIRMED_1_TO_2", "to": "SELESAI" }
+    ],
+    "invalid": [
+      { "from": "DIDAFTARKAN", "event": "HANDOFF_CONFIRMED_1_TO_2", "reason": "STAGE_JUMP" },
+      { "from": "SELESAI", "event": "HANDOFF_CONFIRMED_0_TO_1", "reason": "STAGE_JUMP" },
+      {
+        "from": "DIDAFTARKAN",
+        "event": "EVALUATE_CONDITION",
+        "reason": "EVALUATOR_CANNOT_CHANGE_DISTRIBUTION"
+      },
+      {
+        "from": "DALAM_DISTRIBUSI",
+        "event": "DATA_QUALITY_UPDATE",
+        "reason": "WORKER_CANNOT_CHANGE_DISTRIBUTION"
+      }
+    ]
+  },
+  "handoffCases": [
+    {
+      "id": "initiation-valid-0-to-1",
+      "op": "INITIATE",
+      "currentStage": 0,
+      "currentCustodianWallet": "0xsender",
+      "input": {
+        "senderWallet": "0xsender",
+        "senderRole": "PRODUCER_ADMIN",
+        "toStage": 1,
+        "recipientWallet": "0xdist",
+        "recipientOrgId": "org-dist",
+        "expiresInMinutes": 60
+      },
+      "pendingExists": false,
+      "expectError": null
+    },
+    {
+      "id": "initiation-wrong-sender",
+      "op": "INITIATE",
+      "currentStage": 0,
+      "currentCustodianWallet": "0xsender",
+      "input": {
+        "senderWallet": "0xother",
+        "senderRole": "PRODUCER_ADMIN",
+        "toStage": 1,
+        "recipientWallet": "0xdist",
+        "recipientOrgId": "org-dist",
+        "expiresInMinutes": 60
+      },
+      "pendingExists": false,
+      "expectError": "WRONG_SENDER"
+    },
+    {
+      "id": "initiation-stage-jump",
+      "op": "INITIATE",
+      "currentStage": 0,
+      "currentCustodianWallet": "0xsender",
+      "input": {
+        "senderWallet": "0xsender",
+        "senderRole": "PRODUCER_ADMIN",
+        "toStage": 2,
+        "recipientWallet": "0xretail",
+        "recipientOrgId": "org-retail",
+        "expiresInMinutes": 60
+      },
+      "pendingExists": false,
+      "expectError": "STAGE_JUMP"
+    },
+    {
+      "id": "initiation-pending-exists",
+      "op": "INITIATE",
+      "currentStage": 0,
+      "currentCustodianWallet": "0xsender",
+      "input": {
+        "senderWallet": "0xsender",
+        "senderRole": "PRODUCER_ADMIN",
+        "toStage": 1,
+        "recipientWallet": "0xdist",
+        "recipientOrgId": "org-dist",
+        "expiresInMinutes": 60
+      },
+      "pendingExists": true,
+      "expectError": "PENDING_HANDOFF_EXISTS"
+    },
+    {
+      "id": "initiation-wrong-role-distributor-stage",
+      "op": "INITIATE",
+      "currentStage": 0,
+      "currentCustodianWallet": "0xsender",
+      "input": {
+        "senderWallet": "0xsender",
+        "senderRole": "RETAILER_ADMIN",
+        "toStage": 1,
+        "recipientWallet": "0xdist",
+        "recipientOrgId": "org-dist",
+        "expiresInMinutes": 60
+      },
+      "pendingExists": false,
+      "expectError": "WRONG_ROLE"
+    },
+    {
+      "id": "initiation-expired-in-past",
+      "op": "INITIATE",
+      "currentStage": 0,
+      "currentCustodianWallet": "0xsender",
+      "input": {
+        "senderWallet": "0xsender",
+        "senderRole": "PRODUCER_ADMIN",
+        "toStage": 1,
+        "recipientWallet": "0xdist",
+        "recipientOrgId": "org-dist",
+        "expiresInMinutes": -5
+      },
+      "pendingExists": false,
+      "expectError": "EXPIRED"
+    },
+    {
+      "id": "confirmation-valid-0-to-1",
+      "op": "CONFIRM",
+      "currentStage": 0,
+      "pendingIntent": {
+        "senderWallet": "0xsender",
+        "recipientWallet": "0xdist",
+        "toStage": 1,
+        "expiresAtOffsetMinutes": 60,
+        "status": "PENDING"
+      },
+      "input": { "confirmerWallet": "0xdist", "confirmerRole": "DISTRIBUTOR_ADMIN" },
+      "expectError": null,
+      "expectStageAfter": 1,
+      "expectDistributionAfter": "DALAM_DISTRIBUSI"
+    },
+    {
+      "id": "confirmation-wrong-recipient",
+      "op": "CONFIRM",
+      "currentStage": 0,
+      "pendingIntent": {
+        "senderWallet": "0xsender",
+        "recipientWallet": "0xdist",
+        "toStage": 1,
+        "expiresAtOffsetMinutes": 60,
+        "status": "PENDING"
+      },
+      "input": { "confirmerWallet": "0xother", "confirmerRole": "DISTRIBUTOR_ADMIN" },
+      "expectError": "WRONG_RECIPIENT"
+    },
+    {
+      "id": "confirmation-wrong-role",
+      "op": "CONFIRM",
+      "currentStage": 0,
+      "pendingIntent": {
+        "senderWallet": "0xsender",
+        "recipientWallet": "0xdist",
+        "toStage": 1,
+        "expiresAtOffsetMinutes": 60,
+        "status": "PENDING"
+      },
+      "input": { "confirmerWallet": "0xdist", "confirmerRole": "RETAILER_ADMIN" },
+      "expectError": "WRONG_ROLE"
+    },
+    {
+      "id": "confirmation-no-pending",
+      "op": "CONFIRM",
+      "currentStage": 0,
+      "pendingIntent": null,
+      "input": { "confirmerWallet": "0xdist", "confirmerRole": "DISTRIBUTOR_ADMIN" },
+      "expectError": "NO_PENDING_HANDOFF"
+    },
+    {
+      "id": "confirmation-expired",
+      "op": "CONFIRM",
+      "currentStage": 0,
+      "pendingIntent": {
+        "senderWallet": "0xsender",
+        "recipientWallet": "0xdist",
+        "toStage": 1,
+        "expiresAtOffsetMinutes": -5,
+        "status": "PENDING"
+      },
+      "input": { "confirmerWallet": "0xdist", "confirmerRole": "DISTRIBUTOR_ADMIN" },
+      "expectError": "EXPIRED"
+    },
+    {
+      "id": "confirmation-cancelled-intent",
+      "op": "CONFIRM",
+      "currentStage": 0,
+      "pendingIntent": {
+        "senderWallet": "0xsender",
+        "recipientWallet": "0xdist",
+        "toStage": 1,
+        "expiresAtOffsetMinutes": 60,
+        "status": "CANCELLED"
+      },
+      "input": { "confirmerWallet": "0xdist", "confirmerRole": "DISTRIBUTOR_ADMIN" },
+      "expectError": "NO_PENDING_HANDOFF"
+    },
+    {
+      "id": "confirmation-valid-1-to-2",
+      "op": "CONFIRM",
+      "currentStage": 1,
+      "pendingIntent": {
+        "senderWallet": "0xdist",
+        "recipientWallet": "0xretail",
+        "toStage": 2,
+        "expiresAtOffsetMinutes": 60,
+        "status": "PENDING"
+      },
+      "input": { "confirmerWallet": "0xretail", "confirmerRole": "RETAILER_ADMIN" },
+      "expectError": null,
+      "expectStageAfter": 2,
+      "expectDistributionAfter": "SELESAI"
+    },
+    {
+      "id": "cancellation-valid",
+      "op": "CANCEL",
+      "currentStage": 0,
+      "pendingIntent": {
+        "senderWallet": "0xsender",
+        "recipientWallet": "0xdist",
+        "toStage": 1,
+        "expiresAtOffsetMinutes": 60,
+        "status": "PENDING"
+      },
+      "input": { "senderWallet": "0xsender" },
+      "expectError": null
+    },
+    {
+      "id": "cancellation-wrong-sender",
+      "op": "CANCEL",
+      "currentStage": 0,
+      "pendingIntent": {
+        "senderWallet": "0xsender",
+        "recipientWallet": "0xdist",
+        "toStage": 1,
+        "expiresAtOffsetMinutes": 60,
+        "status": "PENDING"
+      },
+      "input": { "senderWallet": "0xother" },
+      "expectError": "WRONG_SENDER"
+    }
+  ]
+}

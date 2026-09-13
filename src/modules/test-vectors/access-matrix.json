@@ -1,0 +1,85 @@
+{
+  "$comment": "Matriks klasifikasi akses (IMPLEMENTATION-PLAN §3.4 + §3.6). publicReason harus aman (tanpa bocor validitas kode). SAH → on-chain per-event; TIDAK_SAH/ANOMALI → off-chain + digest.",
+  "cases": [
+    {
+      "id": "batch-not-found",
+      "input": {
+        "batchExists": false,
+        "codeHashMatches": false,
+        "withinSchedule": false,
+        "locationMatches": false,
+        "batchNotPaused": false
+      },
+      "expect": { "result": "TIDAK_SAH", "reason": "Batch tidak dikenali" }
+    },
+    {
+      "id": "code-invalid",
+      "input": {
+        "batchExists": true,
+        "codeHashMatches": false,
+        "withinSchedule": true,
+        "locationMatches": true,
+        "batchNotPaused": true
+      },
+      "expect": {
+        "result": "TIDAK_SAH",
+        "reason": "Verifikasi tidak berhasil. Periksa kode dan batch yang dipindai."
+      }
+    },
+    {
+      "id": "schedule-mismatch",
+      "input": {
+        "batchExists": true,
+        "codeHashMatches": true,
+        "withinSchedule": false,
+        "locationMatches": true,
+        "batchNotPaused": true
+      },
+      "expect": { "result": "ANOMALI", "reason": "Periksa jadwal" }
+    },
+    {
+      "id": "location-mismatch",
+      "input": {
+        "batchExists": true,
+        "codeHashMatches": true,
+        "withinSchedule": true,
+        "locationMatches": false,
+        "batchNotPaused": true
+      },
+      "expect": { "result": "ANOMALI", "reason": "Periksa lokasi" }
+    },
+    {
+      "id": "schedule-and-location-mismatch",
+      "input": {
+        "batchExists": true,
+        "codeHashMatches": true,
+        "withinSchedule": false,
+        "locationMatches": false,
+        "batchNotPaused": true
+      },
+      "expect": { "result": "ANOMALI", "reason": "Periksa jadwal dan lokasi" }
+    },
+    {
+      "id": "batch-paused",
+      "input": {
+        "batchExists": true,
+        "codeHashMatches": true,
+        "withinSchedule": true,
+        "locationMatches": true,
+        "batchNotPaused": false
+      },
+      "expect": { "result": "TIDAK_SAH", "reason": "Pencatatan ditunda" }
+    },
+    {
+      "id": "all-valid",
+      "input": {
+        "batchExists": true,
+        "codeHashMatches": true,
+        "withinSchedule": true,
+        "locationMatches": true,
+        "batchNotPaused": true
+      },
+      "expect": { "result": "SAH", "reason": "Akses terverifikasi" }
+    }
+  ]
+}

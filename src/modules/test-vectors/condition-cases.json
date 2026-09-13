@@ -1,0 +1,212 @@
+{
+  "$comment": "Kasus evaluasi kondisi (IMPLEMENTATION-PLAN §3.2 + §3.6). shared.test vectors antara Vitest dan Hardhat. Semua nilai dalam PPM (SCALE 10^6). Profile: COLD_CHAIN, TEMPERATURE 2..6 °C, HUMIDITY 40..80 %RH, toleransi 900s, stale 900s. t = menit relatif.",
+  "profile": {
+    "handlingMode": "COLD_CHAIN",
+    "version": 1,
+    "staleAfterSeconds": 900,
+    "rules": [
+      {
+        "code": "TEMPERATURE",
+        "unit": "°C",
+        "required": true,
+        "minPPM": 2000000,
+        "maxPPM": 6000000,
+        "toleranceSeconds": 900,
+        "severity": "CRITICAL"
+      },
+      {
+        "code": "HUMIDITY",
+        "unit": "%RH",
+        "required": false,
+        "minPPM": 40000000,
+        "maxPPM": 80000000,
+        "toleranceSeconds": 900,
+        "severity": "CRITICAL"
+      }
+    ]
+  },
+  "cases": [
+    {
+      "id": "normal",
+      "readings": [
+        {
+          "t": 0,
+          "values": { "TEMPERATURE": 4000000, "HUMIDITY": 60000000 },
+          "deviceHealth": "ONLINE"
+        },
+        {
+          "t": 5,
+          "values": { "TEMPERATURE": 3500000, "HUMIDITY": 55000000 },
+          "deviceHealth": "ONLINE"
+        }
+      ],
+      "expect": {
+        "conditionStatus": "COMPLIANT",
+        "dataQualityStatus": "AVAILABLE",
+        "reasons": ["WITHIN_RANGE"]
+      }
+    },
+    {
+      "id": "at-boundary",
+      "readings": [
+        {
+          "t": 0,
+          "values": { "TEMPERATURE": 2000000, "HUMIDITY": 80000000 },
+          "deviceHealth": "ONLINE"
+        }
+      ],
+      "expect": {
+        "conditionStatus": "COMPLIANT",
+        "dataQualityStatus": "AVAILABLE",
+        "reasons": ["AT_BOUNDARY"]
+      }
+    },
+    {
+      "id": "below-min",
+      "readings": [
+        { "t": 0, "values": { "TEMPERATURE": 1500000 }, "deviceHealth": "ONLINE" },
+        { "t": 5, "values": { "TEMPERATURE": 1500000 }, "deviceHealth": "ONLINE" },
+        { "t": 16, "values": { "TEMPERATURE": 1500000 }, "deviceHealth": "ONLINE" }
+      ],
+      "expect": {
+        "conditionStatus": "AT_RISK",
+        "dataQualityStatus": "AVAILABLE",
+        "reasons": ["OUT_OF_RANGE"],
+        "violatedParameters": ["TEMPERATURE"]
+      }
+    },
+    {
+      "id": "short-violation-recovered",
+      "readings": [
+        { "t": 0, "values": { "TEMPERATURE": 4000000 }, "deviceHealth": "ONLINE" },
+        { "t": 5, "values": { "TEMPERATURE": 8000000 }, "deviceHealth": "ONLINE" },
+        { "t": 10, "values": { "TEMPERATURE": 4000000 }, "deviceHealth": "ONLINE" }
+      ],
+      "expect": {
+        "conditionStatus": "COMPLIANT",
+        "dataQualityStatus": "AVAILABLE",
+        "reasons": ["WITHIN_TOLERANCE"]
+      }
+    },
+    {
+      "id": "long-violation",
+      "readings": [
+        { "t": 0, "values": { "TEMPERATURE": 4000000 }, "deviceHealth": "ONLINE" },
+        { "t": 5, "values": { "TEMPERATURE": 9000000 }, "deviceHealth": "ONLINE" },
+        { "t": 20, "values": { "TEMPERATURE": 9500000 }, "deviceHealth": "ONLINE" }
+      ],
+      "expect": {
+        "conditionStatus": "AT_RISK",
+        "dataQualityStatus": "AVAILABLE",
+        "reasons": ["OUT_OF_RANGE"],
+        "violatedParameters": ["TEMPERATURE"]
+      }
+    },
+    {
+      "id": "tolerance-zero",
+      "$comment": "profil toleransi 0 → AT_RISK seketika",
+      "profileOverride": {
+        "rules": [
+          {
+            "code": "TEMPERATURE",
+            "unit": "°C",
+            "required": true,
+            "minPPM": 2000000,
+            "maxPPM": 6000000,
+            "toleranceSeconds": 0,
+            "severity": "CRITICAL"
+          }
+        ]
+      },
+      "readings": [{ "t": 0, "values": { "TEMPERATURE": 7000000 }, "deviceHealth": "ONLINE" }],
+      "expect": {
+        "conditionStatus": "AT_RISK",
+        "dataQualityStatus": "AVAILABLE",
+        "reasons": ["OUT_OF_RANGE"],
+        "violatedParameters": ["TEMPERATURE"]
+      }
+    },
+    {
+      "id": "required-param-missing",
+      "readings": [{ "t": 0, "values": { "HUMIDITY": 60000000 }, "deviceHealth": "ONLINE" }],
+      "expect": {
+        "conditionStatus": "COMPLIANT",
+        "dataQualityStatus": "DATA_UNAVAILABLE",
+        "reasons": ["REQUIRED_PARAM_MISSING:TEMPERATURE"]
+      }
+    },
+    {
+      "id": "sensor-offline",
+      "readings": [
+        { "t": 0, "values": { "TEMPERATURE": 4000000 }, "deviceHealth": "ONLINE" },
+        { "t": 10, "values": {}, "deviceHealth": "OFFLINE" }
+      ],
+      "expect": {
+        "conditionStatus": "COMPLIANT",
+        "dataQualityStatus": "DATA_UNAVAILABLE",
+        "reasons": ["DEVICE_OFFLINE"]
+      }
+    },
+    {
+      "id": "cooling-fault-cold-chain",
+      "readings": [
+        {
+          "t": 0,
+          "values": { "TEMPERATURE": 4000000 },
+          "deviceHealth": "ONLINE",
+          "coolingState": "ON"
+        },
+        {
+          "t": 5,
+          "values": { "TEMPERATURE": 4000000 },
+          "deviceHealth": "ONLINE",
+          "coolingState": "FAULT"
+        }
+      ],
+      "expect": {
+        "conditionStatus": "AT_RISK",
+        "dataQualityStatus": "AVAILABLE",
+        "reasons": ["COOLING_FAULT"],
+        "operationalAlerts": ["COOLING_FAULT"]
+      }
+    },
+    {
+      "id": "door-open-alert-only",
+      "readings": [
+        {
+          "t": 0,
+          "values": { "TEMPERATURE": 4000000 },
+          "deviceHealth": "ONLINE",
+          "doorState": "OPEN"
+        }
+      ],
+      "expect": {
+        "conditionStatus": "COMPLIANT",
+        "dataQualityStatus": "AVAILABLE",
+        "reasons": ["WITHIN_RANGE"],
+        "operationalAlerts": ["DOOR_OPEN"]
+      }
+    },
+    {
+      "id": "temp-hum-violation-both",
+      "readings": [
+        {
+          "t": 0,
+          "values": { "TEMPERATURE": 10000000, "HUMIDITY": 90000000 },
+          "deviceHealth": "ONLINE"
+        },
+        {
+          "t": 20,
+          "values": { "TEMPERATURE": 10000000, "HUMIDITY": 90000000 },
+          "deviceHealth": "ONLINE"
+        }
+      ],
+      "expect": {
+        "conditionStatus": "AT_RISK",
+        "dataQualityStatus": "AVAILABLE",
+        "reasons": ["OUT_OF_RANGE"],
+        "violatedParameters": ["TEMPERATURE", "HUMIDITY"]
+      }
+    }
+  ]
+}
