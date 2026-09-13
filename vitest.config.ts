@@ -6,9 +6,8 @@ export default defineConfig({
     include: ["tests/**/*.test.ts"],
     environment: "node",
     testTimeout: 30000,
-    // PGlite (WASM) tidak stabil di worker threads — jalankan di fork tunggal
+    // PGlite (WASM) stabil di fork tunggal
     pool: "forks",
-    poolOptions: { forks: { singleFork: true } },
     fileParallelism: false,
   },
   resolve: {

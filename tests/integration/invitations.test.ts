@@ -7,7 +7,7 @@ import {
   InviteError,
   pgliteAdapter,
 } from "@/server/actions/invitations";
-import { hash, verify } from "@node-rs/argon2";
+import { verify } from "@node-rs/argon2";
 
 vi.mock("server-only", () => ({}));
 

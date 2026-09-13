@@ -5,8 +5,8 @@ import type { ReactNode } from "react";
 
 /**
  * Privy = provider autentikasi internal (PRD): social login + passwordless email.
- * MetaMask TIDAK prasyarat; embedded wallet dibuat otomatis untuk pengguna
- * internal yang berwenang (createOnLogin: pengguna undangan).
+ * MetaMask TIDAK prasyarat; embedded wallet Ethereum dibuat untuk pengguna
+ * internal yang berwenang (createOnLogin di ethereum config).
  */
 export function AppPrivyProvider({ children }: { children: ReactNode }) {
   const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
@@ -18,18 +18,17 @@ export function AppPrivyProvider({ children }: { children: ReactNode }) {
     <PrivyProvider
       appId={appId}
       config={{
-        loginMethods: ["email", "google", "wallet"],
+        loginMethods: ["email", "google"],
         embeddedWallets: {
-          createOnLogin: "users-with-link",
+          ethereum: {
+            createOnLogin: "all-users",
+          },
         },
         appearance: {
           theme: "light",
           accentColor: "#0F5965",
         },
-        mfa: {
-          // MFA untuk akun yang mencatat peristiwa sensitif (PRD story 31)
-          enableAnchorMfa: true,
-        },
+        mfa: {},
       }}
     >
       {children}

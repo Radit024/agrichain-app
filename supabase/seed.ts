@@ -11,7 +11,6 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { hash } from "@node-rs/argon2";
-import { randomBytes } from "node:crypto";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const DB_DIR = path.resolve(HERE, "../.pglite");

@@ -1,22 +1,17 @@
 import "server-only";
-import { PrivyClient } from "@privy-io/node";
+import { verifyAccessToken } from "@privy-io/node";
 
 /**
  * Verifikasi access token Privy di SERVER (PRD: kontrol UI bukan keamanan).
  * Boundary ini yang di-mock pada integration test (K11).
+ * API node-sdk: verifyAccessToken({access_token, app_id, verification_key}).
  */
 
-let cached: PrivyClient | null = null;
-
-function getPrivyClient(): PrivyClient {
-  if (cached) return cached;
-  const appId = process.env.PRIVY_APP_ID;
-  const appSecret = process.env.PRIVY_APP_SECRET;
-  if (!appId || !appSecret) {
-    throw new Error("PRIVY_APP_ID dan PRIVY_APP_SECRET wajib di-set di server");
+export class PrivyAuthError extends Error {
+  constructor(public code: "SESSION_INVALID" | "SESSION_EXPIRED" | "NO_ACCESS") {
+    super(code);
+    this.name = "PrivyAuthError";
   }
-  cached = new PrivyClient(appId, appSecret);
-  return cached;
 }
 
 export interface VerifiedPrivyUser {
@@ -25,25 +20,36 @@ export interface VerifiedPrivyUser {
   walletAddress?: string;
 }
 
-/** Hasil verifikasi token — tidak pernah melempar data mentah token. */
-export async function verifyPrivyAccessToken(accessToken: string): Promise<VerifiedPrivyUser> {
-  const client = getPrivyClient();
-  const verified = await client.verifyAuthToken(accessToken);
-  if (!verified) {
-    throw new PrivyAuthError("SESSION_INVALID");
+function getVerifyConfig() {
+  const appId = process.env.PRIVY_APP_ID;
+  const verificationKey = process.env.PRIVY_VERIFICATION_KEY;
+  if (!appId || !verificationKey) {
+    throw new Error("PRIVY_APP_ID dan PRIVY_VERIFICATION_KEY wajib di-set di lingkungan server");
   }
-  return {
-    did: verified.userId,
-    email: verified.linkedAccounts?.find((a) => a.type === "email")?.address,
-    walletAddress: verified.linkedAccounts?.find((a) => a.type === "wallet")?.address,
-  };
+  return { appId, verificationKey };
 }
 
-export class PrivyAuthError extends Error {
-  constructor(public code: "SESSION_INVALID" | "SESSION_EXPIRED" | "NO_ACCESS") {
-    super(code);
-    this.name = "PrivyAuthError";
+/** Hasil verifikasi token — tidak pernah melempar data mentah token.
+ * DID saja; email/wallet dibaca dari profil internal (app_users) via aktivasi. */
+export async function verifyPrivyAccessToken(accessToken: string): Promise<VerifiedPrivyUser> {
+  const { appId, verificationKey } = getVerifyConfig();
+  let payload;
+  try {
+    payload = await verifyAccessToken({
+      access_token: accessToken,
+      app_id: appId,
+      verification_key: verificationKey,
+    });
+  } catch {
+    throw new PrivyAuthError("SESSION_INVALID");
   }
+  if (!payload || !payload.user_id) {
+    throw new PrivyAuthError("SESSION_INVALID");
+  }
+  if (payload.expiration * 1000 < Date.now()) {
+    throw new PrivyAuthError("SESSION_EXPIRED");
+  }
+  return { did: payload.user_id };
 }
 
 /** Ekstrak token dari header Authorization: Bearer <token>. */
