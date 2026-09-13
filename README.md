@@ -1,36 +1,40 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Agrichain — Purwarupa Ketertelusuran Distribusi Pangan
 
-## Getting Started
+Implementasi dari `../IMPLEMENTATION-PLAN.md` (Fase A–F). Server-based modular monolith: Next.js App Router + Supabase (off-chain) + Solidity/Hardhat (audit on-chain, Polygon Amoy) + Privy (auth internal).
 
-First, run the development server:
+## Menjalankan lokal
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm ci                # instalasi sesuai lockfile
+npm run dev           # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Test
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npx vitest run        # unit + integration (PGlite in-process — tanpa Docker)
+npx hardhat test      # smart contract (jaringan hardhat in-process)
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+> Catatan: mesin pengembangan ini tidak punya Docker. Migrasi Supabase diuji dengan **PGlite** (Postgres WASM) via `tests/db-` harness. Bila Docker tersedia, `docker compose up -d` menjalankan Postgres Supabase asli di `localhost:54322`; skema migrasi identik dan source-controlled di `supabase/migrations/`.
 
-## Learn More
+## Struktur
 
-To learn more about Next.js, take a look at the following resources:
+- `src/modules/` — domain murni (tanpa I/O): fixed-point, monitoring-profile, condition-policy, batch-status, access-verification, public-id, shared-types, test-vectors
+- `src/server/` — data access layer (server-only): supabase client, privy verify, session, chain, rate-limit, audit
+- `src/app/` — App Router: `(public)` `/p/[publicId]`, `(auth)`, `(internal)` dashboard
+- `contracts/` — `AgrichainLedger.sol` + Hardhat test + deploy script Amoy
+- `supabase/migrations/` — skema SQL terkontrol versi
+- `tests/` — unit (Vitest), integration (Vitest), e2e (Playwright — Fase berikutnya)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Lingkungan
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Salin `.env.example` → `.env` (lokal). Tidak ada secret yang di-commit.
 
-## Deploy on Vercel
+## Perintah penting
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run build         # gerbang Fase A
+npx vitest run        # gerbang Fase C
+npx hardhat test      # gerbang Fase D
+```

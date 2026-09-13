@@ -1,26 +1,162 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ============================================================
+   AGRICHAIN DESIGN TOKENS — sumber: DESIGN.md (otoritatif)
+   "Signal is scarce": warna status hanya untuk badge/ikon,
+   bukan wallpaper. Latar tetap putih/netral.
+   ============================================================ */
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Kanvas & permukaan */
+  --background: #f5f8f7;
+  --foreground: #102a33;
+  --card: #ffffff;
+  --card-foreground: #102a33;
+  --popover: #ffffff;
+  --popover-foreground: #102a33;
+  --surface-muted: #ecf3f1;
+
+  /* Tinta */
+  --ink: #102a33;
+  --ink-muted: #587078;
+
+  /* Batas */
+  --border: #d6e2df;
+  --input: #d6e2df;
+  --ring: #0f5965;
+
+  /* Aksi utama (brand dark blue-green) */
+  --primary: #0f5965;
+  --primary-foreground: #ffffff;
+  --brand: #0f5965;
+  --brand-hover: #0a4650;
+  --brand-soft: #dceff0;
+  --secondary: #ffffff;
+  --secondary-foreground: #102a33;
+  --accent: #ecf3f1;
+  --accent-foreground: #102a33;
+  --muted: #ecf3f1;
+  --muted-foreground: #587078;
+
+  /* Status — DIPISAH dari primary (DESIGN.md: jangan overload primary) */
+  --compliant: #16794a;
+  --compliant-soft: #ddf3e6;
+  --warning: #b86b00;
+  --warning-soft: #fff0d4;
+  --danger: #b42318;
+  --danger-soft: #fde7e5;
+  --destructive: #b42318;
+  --info: #1d6fa5;
+  --info-soft: #e2f0fa;
+
+  /* Chart (turut palet brand/ink, bukan warna mata) */
+  --chart-1: #0f5965;
+  --chart-2: #16794a;
+  --chart-3: #b86b00;
+  --chart-4: #1d6fa5;
+  --chart-5: #587078;
+
+  /* Radius: kartu 12px, tombol/badge 8px (DESIGN.md Shapes) */
+  --radius: 0.75rem;
+  --radius-control: 0.5rem;
+
+  /* Elevasi: satu shadow dialog saja (DESIGN.md Elevation) */
+  --shadow-dialog: 0 12px 32px rgba(16, 42, 51, 0.14);
+
+  --sidebar: #ffffff;
+  --sidebar-foreground: #102a33;
+  --sidebar-primary: #0f5965;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #dceff0;
+  --sidebar-accent-foreground: #0f5965;
+  --sidebar-border: #d6e2df;
+  --sidebar-ring: #0f5965;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-ibm-plex-sans);
+  --font-mono: var(--font-ibm-plex-mono);
+  --font-heading: var(--font-ibm-plex-sans);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Token status aplikasi — dipakai via util kelas (badge status) */
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-surface-muted: var(--surface-muted);
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-soft: var(--brand-soft);
+  --color-compliant: var(--compliant);
+  --color-compliant-soft: var(--compliant-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+
+  --radius-sm: calc(var(--radius-control) * 0.75);
+  --radius-md: var(--radius-control);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.25);
+  --radius-2xl: calc(var(--radius) * 1.6);
+  --radius-3xl: calc(var(--radius) * 2);
+  --radius-4xl: calc(var(--radius) * 2.4);
+
+  --shadow-dialog: var(--shadow-dialog);
+
+  /* Spacing base 8px (DESIGN.md Layout: 8,12,16,24,32,48) */
+  --spacing-rhythm: 1.5rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
   }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "tnum" off;
+  }
+  html {
+    @apply font-sans;
+  }
+  /* Angka metrik & tabel: tabular numerals (DESIGN.md Typography) */
+  .tnum,
+  table {
+    font-feature-settings: "tnum" on;
+  }
 }
