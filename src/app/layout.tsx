@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
+import { AppPrivyProvider } from "@/components/providers";
 import "./globals.css";
 
 const ibmPlexSans = IBM_Plex_Sans({
@@ -33,7 +34,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${ibmPlexSans.variable} ${ibmPlexMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        {children}
+        <AppPrivyProvider>{children}</AppPrivyProvider>
         <Toaster position="top-right" richColors />
       </body>
     </html>
