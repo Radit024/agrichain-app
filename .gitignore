@@ -52,3 +52,9 @@ vitest-out*.txt
 server-*.log
 test-results/
 playwright-report/
+
+bruno\agrichain
+cache-hardhat
+IMPLEMENTATION-PLAN.md
+PRD-Sistem-Pelacakan-Distribusi-Produk-Pangan.md
+Product.md
