@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { extractBearerToken } from "@/server/auth/privy";
+import { AuthError } from "@/server/auth/session";
 import {
   APP_SESSION_COOKIE,
   appSessionCookieOptions,
@@ -16,7 +17,16 @@ export async function POST(request: Request) {
     const response = new NextResponse(null, { status: 204 });
     response.cookies.set(APP_SESSION_COOKIE, token, appSessionCookieOptions);
     return response;
-  } catch {
+  } catch (error) {
+    if (error instanceof AuthError && error.code === "NO_ACCESS") {
+      return NextResponse.json(
+        { error: "Akun belum diaktivasi.", code: "NO_ACCESS" },
+        { status: 403 },
+      );
+    }
+    if (error instanceof AuthError) {
+      return NextResponse.json({ error: "Sesi tidak sah.", code: error.code }, { status: 401 });
+    }
     return NextResponse.json({ error: "Sesi tidak sah." }, { status: 401 });
   }
 }

@@ -37,7 +37,7 @@ export function InvitationActivationForm({ invitationToken }: { invitationToken:
       });
       if (!response.ok) throw new Error("Undangan tidak dapat diaktivasi.");
 
-      router.replace("/dashboard");
+      router.replace("/mainapp/dashboard");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Undangan tidak dapat diaktivasi.");
     } finally {

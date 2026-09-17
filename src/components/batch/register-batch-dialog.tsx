@@ -72,7 +72,7 @@ export function RegisterBatchDialog({
       setCategoryId("");
       setProfileId("");
       setBatchCode("");
-      router.push(`/batch/${result.data.batchId}`);
+      router.push(`/mainapp/batch/${result.data.batchId}`);
     });
   }
 

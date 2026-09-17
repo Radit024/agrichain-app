@@ -39,7 +39,7 @@ export default async function BatchDetailPage({
   return (
     <div className="space-y-6">
       <Link
-        href="/batch"
+        href="/mainapp/batch"
         className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-ink"
       >
         <ArrowLeft aria-hidden className="size-4" />
@@ -247,7 +247,7 @@ export default async function BatchDetailPage({
                   <p className="text-ink-muted">
                     Tidak ada serah-terima menunggu penerimaan. Kelola dari halaman{" "}
                     <Link
-                      href="/serah-terima"
+                      href="/mainapp/serah-terima"
                       className="font-medium text-brand underline-offset-2 hover:underline"
                     >
                       Serah-terima

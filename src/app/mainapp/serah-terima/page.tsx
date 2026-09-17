@@ -38,7 +38,7 @@ export default async function HandoffPage() {
       header: "Batch",
       cell: (r) => (
         <Link
-          href={`/batch/${r.batchId}`}
+          href={`/mainapp/batch/${r.batchId}`}
           className="font-mono text-sm font-semibold text-ink hover:underline underline-offset-2"
         >
           {r.batchCode}
@@ -152,7 +152,7 @@ export default async function HandoffPage() {
               <div className="rounded-xl border border-border bg-card p-4">
                 <div className="flex items-start justify-between gap-2">
                   <Link
-                    href={`/batch/${r.batchId}`}
+                    href={`/mainapp/batch/${r.batchId}`}
                     className="font-mono text-sm font-semibold text-ink"
                   >
                     {r.batchCode}

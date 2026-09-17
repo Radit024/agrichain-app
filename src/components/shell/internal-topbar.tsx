@@ -25,13 +25,13 @@ import { cn } from "@/lib/utils";
  */
 
 const navItems = [
-  { href: "/dashboard", label: "Ringkasan", icon: LayoutDashboard },
-  { href: "/batch", label: "Batch", icon: Boxes },
-  { href: "/serah-terima", label: "Serah-terima", icon: ClipboardCheck },
-  { href: "/verifikasi", label: "Verifikasi Akses", icon: ShieldCheck },
-  { href: "/laporan", label: "Laporan", icon: BarChart3 },
-  { href: "/titik-distribusi", label: "Titik Distribusi", icon: MapPin },
-  { href: "/pengaturan", label: "Pengaturan", icon: Settings },
+  { href: "/mainapp/dashboard", label: "Ringkasan", icon: LayoutDashboard },
+  { href: "/mainapp/batch", label: "Batch", icon: Boxes },
+  { href: "/mainapp/serah-terima", label: "Serah-terima", icon: ClipboardCheck },
+  { href: "/mainapp/verifikasi", label: "Verifikasi Akses", icon: ShieldCheck },
+  { href: "/mainapp/laporan", label: "Laporan", icon: BarChart3 },
+  { href: "/mainapp/titik-distribusi", label: "Titik Distribusi", icon: MapPin },
+  { href: "/mainapp/pengaturan", label: "Pengaturan", icon: Settings },
 ] as const;
 
 export function InternalTopbar() {
@@ -65,7 +65,11 @@ export function InternalTopbar() {
         </div>
 
         {/* Search kontekstual 400px — desktop saja */}
-        <form action="/batch" className="hidden w-full max-w-[400px] md:block" role="search">
+        <form
+          action="/mainapp/batch"
+          className="hidden w-full max-w-[400px] md:block"
+          role="search"
+        >
           <label htmlFor="topbar-search" className="sr-only">
             Cari batch, lokasi, atau ID publik
           </label>
@@ -83,7 +87,7 @@ export function InternalTopbar() {
         </span>
 
         <div className="ml-auto flex items-center gap-2">
-          <Link href="/verifikasi" className="hidden md:inline-flex" prefetch={false}>
+          <Link href="/mainapp/verifikasi" className="hidden md:inline-flex" prefetch={false}>
             <Button size="sm" variant="outline" type="button">
               <QrCode aria-hidden className="size-4" />
               Pindai QR

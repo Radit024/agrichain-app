@@ -45,7 +45,7 @@ export default async function DashboardPage() {
               icon={<Boxes aria-hidden className="size-4" />}
               value={m.activeBatches}
               label="Batch aktif"
-              href="/batch"
+              href="/mainapp/batch"
             />
             <MetricDivider />
             <MetricCell
@@ -53,7 +53,7 @@ export default async function DashboardPage() {
               value={m.awaitingReception}
               label="Menunggu penerimaan"
               tone="warning"
-              href="/serah-terima"
+              href="/mainapp/serah-terima"
             />
             <MetricDivider />
             <MetricCell
@@ -123,7 +123,7 @@ export default async function DashboardPage() {
           <header className="flex items-center justify-between border-b border-border px-5 py-4">
             <h2 className="text-sm font-semibold text-ink">Batch yang Perlu Ditindaklanjuti</h2>
             <Link
-              href="/batch"
+              href="/mainapp/batch"
               className="text-xs font-medium text-brand underline-offset-2 hover:underline"
             >
               Lihat semua
@@ -141,7 +141,7 @@ export default async function DashboardPage() {
               {m.attentionBatches.map((b) => (
                 <li key={b.id}>
                   <Link
-                    href={`/batch/${b.id}`}
+                    href={`/mainapp/batch/${b.id}`}
                     className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-5 py-3.5 transition-colors hover:bg-surface-muted"
                   >
                     <span className="min-w-0">
@@ -212,7 +212,7 @@ export default async function DashboardPage() {
           description="Daftarkan batch pertama Anda dari halaman Batch untuk memulai."
           action={
             <Link
-              href="/batch"
+              href="/mainapp/batch"
               className="text-sm font-medium text-brand underline-offset-2 hover:underline"
             >
               Buka halaman Batch

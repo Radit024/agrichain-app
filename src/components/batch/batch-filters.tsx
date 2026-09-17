@@ -121,7 +121,7 @@ export function BatchFilters() {
           variant="ghost"
           size="sm"
           className="h-9 text-ink-muted"
-          onClick={() => router.push("/batch", { scroll: false })}
+          onClick={() => router.push("/mainapp/batch", { scroll: false })}
         >
           <X aria-hidden className="size-3.5" />
           Hapus filter
@@ -181,7 +181,7 @@ export function BatchMobileCard({
 }) {
   return (
     <Link
-      href={`/batch/${batch.id}`}
+      href={`/mainapp/batch/${batch.id}`}
       className="block rounded-xl border border-border bg-card p-4 transition-colors hover:bg-surface-muted"
     >
       <div className="flex items-start justify-between gap-2">

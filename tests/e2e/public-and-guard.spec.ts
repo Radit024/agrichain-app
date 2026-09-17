@@ -32,13 +32,13 @@ test.describe("Halaman publik QR", () => {
 });
 
 test.describe("Guard internal", () => {
-  test("tanpa sesi → /dashboard redirect ke /masuk", async ({ page }) => {
-    await page.goto("/dashboard");
+  test("tanpa sesi → /mainapp/dashboard redirect ke /masuk", async ({ page }) => {
+    await page.goto("/mainapp/dashboard");
     await expect(page).toHaveURL(/\/masuk$/);
   });
 
-  test("/batch tanpa sesi → redirect /masuk", async ({ page }) => {
-    await page.goto("/batch");
+  test("/mainapp/batch tanpa sesi → redirect /masuk", async ({ page }) => {
+    await page.goto("/mainapp/batch");
     await expect(page).toHaveURL(/\/masuk$/);
   });
 

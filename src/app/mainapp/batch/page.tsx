@@ -54,7 +54,7 @@ export default async function BatchListPage({ searchParams }: { searchParams: Se
       header: "Batch",
       cell: (row) => (
         <Link
-          href={`/batch/${row.id}`}
+          href={`/mainapp/batch/${row.id}`}
           className="block min-w-0 hover:underline underline-offset-2"
         >
           <span className="block truncate font-mono text-sm font-semibold text-ink">
@@ -105,7 +105,7 @@ export default async function BatchListPage({ searchParams }: { searchParams: Se
       className: "w-16 text-right",
       cell: (row) => (
         <Link
-          href={`/batch/${row.id}`}
+          href={`/mainapp/batch/${row.id}`}
           className="text-xs font-medium text-brand underline-offset-2 hover:underline"
         >
           Detail

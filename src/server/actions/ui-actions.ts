@@ -65,8 +65,8 @@ export async function uiRegisterBatch(
     const session = await requireUiSession();
     const db = await getDbAdapter();
     const data = await registerBatch(input, db, session);
-    revalidatePath("/batch");
-    revalidatePath("/dashboard");
+    revalidatePath("/mainapp/batch");
+    revalidatePath("/mainapp/dashboard");
     return { ok: true, data };
   } catch (e) {
     return toError(e);
@@ -80,8 +80,8 @@ export async function uiInitiateHandoff(
     const session = await requireUiSession();
     const db = await getDbAdapter();
     const data = await initiateHandoff(input, db, session);
-    revalidatePath("/serah-terima");
-    revalidatePath("/batch");
+    revalidatePath("/mainapp/serah-terima");
+    revalidatePath("/mainapp/batch");
     return { ok: true, data: { intentId: data.intentId, expiresAt: data.expiresAt.toISOString() } };
   } catch (e) {
     return toError(e);
@@ -95,9 +95,9 @@ export async function uiConfirmHandoff(
     const session = await requireUiSession();
     const db = await getDbAdapter();
     const data = await confirmHandoff(batchId, db, session);
-    revalidatePath("/serah-terima");
-    revalidatePath("/batch");
-    revalidatePath(`/batch/${batchId}`);
+    revalidatePath("/mainapp/serah-terima");
+    revalidatePath("/mainapp/batch");
+    revalidatePath(`/mainapp/batch/${batchId}`);
     return { ok: true, data: { intentId: data.intentId } };
   } catch (e) {
     return toError(e);
@@ -109,8 +109,8 @@ export async function uiCancelHandoff(batchId: string): Promise<UiActionResult<{
     const session = await requireUiSession();
     const db = await getDbAdapter();
     await cancelHandoff(batchId, db, session);
-    revalidatePath("/serah-terima");
-    revalidatePath("/batch");
+    revalidatePath("/mainapp/serah-terima");
+    revalidatePath("/mainapp/batch");
     return { ok: true, data: { ok: true } };
   } catch (e) {
     return toError(e);

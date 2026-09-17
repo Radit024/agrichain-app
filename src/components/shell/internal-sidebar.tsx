@@ -19,12 +19,12 @@ import { cn } from "@/lib/utils";
  */
 
 const navItems = [
-  { href: "/dashboard", label: "Ringkasan", icon: LayoutDashboard },
-  { href: "/batch", label: "Batch", icon: Boxes },
-  { href: "/serah-terima", label: "Serah-terima", icon: ClipboardCheck },
-  { href: "/verifikasi", label: "Verifikasi Akses", icon: ShieldIcon },
-  { href: "/laporan", label: "Laporan", icon: BarChart3 },
-  { href: "/titik-distribusi", label: "Titik Distribusi", icon: MapPin },
+  { href: "/mainapp/dashboard", label: "Ringkasan", icon: LayoutDashboard },
+  { href: "/mainapp/batch", label: "Batch", icon: Boxes },
+  { href: "/mainapp/serah-terima", label: "Serah-terima", icon: ClipboardCheck },
+  { href: "/mainapp/verifikasi", label: "Verifikasi Akses", icon: ShieldIcon },
+  { href: "/mainapp/laporan", label: "Laporan", icon: BarChart3 },
+  { href: "/mainapp/titik-distribusi", label: "Titik Distribusi", icon: MapPin },
 ] as const;
 
 function ShieldIcon({ className }: { className?: string }) {
@@ -93,11 +93,11 @@ export function InternalSidebar({
 
       <div className="flex flex-col gap-0.5 border-t border-border px-3 py-4">
         <Link
-          href="/pengaturan"
-          aria-current={pathname === "/pengaturan" ? "page" : undefined}
+          href="/mainapp/pengaturan"
+          aria-current={pathname === "/mainapp/pengaturan" ? "page" : undefined}
           className={cn(
             "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-            pathname === "/pengaturan"
+            pathname === "/mainapp/pengaturan"
               ? "bg-brand-soft text-brand"
               : "text-ink-muted hover:bg-surface-muted hover:text-ink",
           )}
