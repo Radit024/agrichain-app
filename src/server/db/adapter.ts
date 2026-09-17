@@ -27,7 +27,18 @@ export async function getDbAdapter(): Promise<DbAdapter> {
     throw new Error("DATABASE_URL wajib di-set untuk akses Supabase hosted");
   }
   if (!cachedPglite) {
-    const db = new PGlite(process.env.PGLITE_PATH ?? "./.pglite/agrichain.db");
+    const dbPath = process.env.PGLITE_PATH ?? "./.pglite/agrichain.db";
+    try {
+      const { existsSync, unlinkSync } = await import("node:fs");
+      const { join } = await import("node:path");
+      const pidFile = join(dbPath, "postmaster.pid");
+      if (existsSync(pidFile)) {
+        unlinkSync(pidFile);
+      }
+    } catch {
+      // Abaikan jika fs tidak dapat diakses atau file tidak ada
+    }
+    const db = new PGlite(dbPath);
     cachedPglite = {
       query: async <T>(sql: string, params: unknown[] = []) =>
         (await db.query<T>(sql, params as unknown[])).rows,

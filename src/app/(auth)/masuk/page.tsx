@@ -6,11 +6,7 @@ export const metadata: Metadata = { title: "Masuk Petugas" };
 
 export default function MasukPage() {
   return (
-    <AuthSplitLayout
-      description="Akses internal hanya untuk petugas yang menerima undangan."
-      note="Masuk dengan email atau Google. MetaMask tidak diperlukan."
-      title="Masuk ke akun Anda"
-    >
+    <AuthSplitLayout hideHeader>
       <div data-privy-login="">
         <PrivyLoginButton />
       </div>

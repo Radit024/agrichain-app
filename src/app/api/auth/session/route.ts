@@ -18,14 +18,25 @@ export async function POST(request: Request) {
     response.cookies.set(APP_SESSION_COOKIE, token, appSessionCookieOptions);
     return response;
   } catch (error) {
-    if (error instanceof AuthError && error.code === "NO_ACCESS") {
+    console.error("[api/auth/session POST error]:", error);
+    const code = error instanceof AuthError ? error.code : (error as { code?: string })?.code;
+    if (code === "NO_ACCESS") {
       return NextResponse.json(
         { error: "Akun belum diaktivasi.", code: "NO_ACCESS" },
         { status: 403 },
       );
     }
-    if (error instanceof AuthError) {
-      return NextResponse.json({ error: "Sesi tidak sah.", code: error.code }, { status: 401 });
+    if (code === "SESSION_EXPIRED") {
+      return NextResponse.json(
+        { error: "Sesi kedaluwarsa.", code: "SESSION_EXPIRED" },
+        { status: 401 },
+      );
+    }
+    if (code === "SESSION_INVALID") {
+      return NextResponse.json(
+        { error: "Sesi tidak sah.", code: "SESSION_INVALID" },
+        { status: 401 },
+      );
     }
     return NextResponse.json({ error: "Sesi tidak sah." }, { status: 401 });
   }
