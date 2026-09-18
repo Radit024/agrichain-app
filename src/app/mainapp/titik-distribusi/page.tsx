@@ -3,103 +3,68 @@ import { cookies } from "next/headers";
 import { Filter, Download } from "lucide-react";
 import { APP_SESSION_COOKIE, readAppSession } from "@/server/auth/app-session";
 import { getDbAdapter } from "@/server/db/adapter";
-import { listDistributionPoints } from "@/server/queries/internal";
-import { AddSupplierDialog } from "@/components/distribution/add-distribution-point-dialog";
+import { listDistributionPoints, listBatches } from "@/server/queries/internal";
+import { AddDistributionPointDialog } from "@/components/distribution/add-distribution-point-dialog";
+import { DistributionPointsTable } from "@/components/distribution/distribution-points-table";
 
-export const metadata: Metadata = { title: "Suppliers" };
+export const metadata: Metadata = { title: "Titik Distribusi" };
 export const dynamic = "force-dynamic";
 
 export default async function DistributionPointsPage() {
   const session = await readAppSession((await cookies()).get(APP_SESSION_COOKIE)?.value);
   if (!session) return null;
   const db = await getDbAdapter();
-  const points = await listDistributionPoints(db, session);
 
-  const sampleSuppliers = [
-    {
-      name: "Richard Martin",
-      product: "Kit Kat",
-      phone: "7687764556",
-      email: "richard@gmail.com",
-      type: "Taking Return",
-      onTheWay: "13",
-    },
-    {
-      name: "Tom Homan",
-      product: "Maaza",
-      phone: "9867545361",
-      email: "tomhoman@gmail.com",
-      type: "Taking Return",
-      onTheWay: "-",
-    },
-    {
-      name: "Veandir",
-      product: "Dairy Milk",
-      phone: "9367545566",
-      email: "veandien@gmail.com",
-      type: "Not Taking Return",
-      onTheWay: "-",
-    },
-    {
-      name: "Charin",
-      product: "Tomato",
-      phone: "9267545457",
-      email: "charin@gmail.com",
-      type: "Taking Return",
-      onTheWay: "12",
-    },
-    {
-      name: "Hoffman",
-      product: "Milk Bikis",
-      phone: "9367546531",
-      email: "hoffman@gmail.com",
-      type: "Taking Return",
-      onTheWay: "-",
-    },
-    {
-      name: "Fainden Juke",
-      product: "Marie Gold",
-      phone: "9667545962",
-      email: "fainden@gmail.com",
-      type: "Not Taking Return",
-      onTheWay: "9",
-    },
-    {
-      name: "Martin",
-      product: "Saffola",
-      phone: "9867545457",
-      email: "martin@gmail.com",
-      type: "Taking Return",
-      onTheWay: "-",
-    },
-    {
-      name: "Joe Nike",
-      product: "Good day",
-      phone: "9567545769",
-      email: "joenike@gmail.com",
-      type: "Taking Return",
-      onTheWay: "-",
-    },
-    {
-      name: "Dender Luke",
-      product: "Apple",
-      phone: "9667545980",
-      email: "denden@gmail.com",
-      type: "Not Taking Return",
-      onTheWay: "7",
-    },
-  ];
+  const [points, batches] = await Promise.all([
+    listDistributionPoints(db, session),
+    listBatches(db, session),
+  ]);
+
+  const activePointsCount = points.filter((p) => p.isActive).length;
+  const scheduledPointsCount = points.filter((p) => p.schedules.length > 0).length;
+  const totalActiveCodes = points.reduce((acc, p) => acc + (p.activeAccessCodesCount || 0), 0);
+  const activeBatches = batches.map((b) => ({ id: b.id, batchCode: b.batchCode }));
 
   return (
     <div className="space-y-6 pb-12">
-      {/* Card Table: Suppliers (Persis 05-distribution-points.png) */}
+      {/* Summary Cards — Domain Ketertelusuran */}
       <section className="rounded-xl border border-[#F0F1F3] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
-        {/* Table Header with Actions */}
+        <h2 className="text-base font-semibold text-[#1D2939]">Ringkasan Titik Distribusi</h2>
+
+        <div className="mt-4 grid grid-cols-1 divide-y divide-[#F0F1F3] sm:grid-cols-2 sm:divide-y-0 sm:divide-x lg:grid-cols-4">
+          <div className="py-2 sm:px-4 first:pl-0">
+            <h3 className="text-sm font-semibold text-[#1570EF]">Total Titik</h3>
+            <p className="mt-2.5 font-bold text-base text-[#1D2939] tnum">{points.length}</p>
+            <p className="mt-0.5 text-xs text-[#858D9D]">Terdaftar di organisasi</p>
+          </div>
+
+          <div className="py-2 sm:px-4">
+            <h3 className="text-sm font-semibold text-[#10B981]">Titik Aktif</h3>
+            <p className="mt-2.5 font-bold text-base text-[#1D2939] tnum">{activePointsCount}</p>
+            <p className="mt-0.5 text-xs text-[#858D9D]">Dapat digunakan verifikasi</p>
+          </div>
+
+          <div className="py-2 sm:px-4">
+            <h3 className="text-sm font-semibold text-[#845EC2]">Terjadwal</h3>
+            <p className="mt-2.5 font-bold text-base text-[#1D2939] tnum">{scheduledPointsCount}</p>
+            <p className="mt-0.5 text-xs text-[#858D9D]">Memiliki batas jam operasional</p>
+          </div>
+
+          <div className="py-2 sm:px-4 last:pr-0">
+            <h3 className="text-sm font-semibold text-[#F97316]">Kode Akses Aktif</h3>
+            <p className="mt-2.5 font-bold text-base text-[#1D2939] tnum">{totalActiveCodes}</p>
+            <p className="mt-0.5 text-xs text-[#858D9D]">Otorisasi berlaku</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Table Card */}
+      <section className="rounded-xl border border-[#F0F1F3] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#F0F1F3] pb-4">
-          <h2 className="text-base font-semibold text-[#1D2939]">Suppliers</h2>
+          <h2 className="text-base font-semibold text-[#1D2939]">Daftar Titik Distribusi</h2>
 
           <div className="flex items-center gap-3">
-            <AddSupplierDialog />
+            <AddDistributionPointDialog />
 
             <button
               type="button"
@@ -119,70 +84,10 @@ export default async function DistributionPointsPage() {
           </div>
         </div>
 
-        {/* Suppliers Data Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="border-b border-[#F0F1F3] text-xs font-medium text-[#858D9D]">
-              <tr>
-                <th className="py-3.5 pr-4 font-normal">Supplier Name</th>
-                <th className="py-3.5 px-4 font-normal">Product</th>
-                <th className="py-3.5 px-4 font-normal">Contact Number</th>
-                <th className="py-3.5 px-4 font-normal">Email</th>
-                <th className="py-3.5 px-4 font-normal">Type</th>
-                <th className="py-3.5 pl-4 text-right font-normal">On the way</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#F0F1F3] text-[#1D2939]">
-              {points.length > 0
-                ? points.map((p, idx) => {
-                    const type = p.isActive ? "Taking Return" : "Not Taking Return";
-                    const isTaking = p.isActive;
-                    return (
-                      <tr key={p.id} className="hover:bg-[#F9FAFB]">
-                        <td className="py-4 pr-4 font-medium">{p.publicName}</td>
-                        <td className="py-4 px-4 text-[#5D6679]">
-                          {p.internalNotes || "Komoditas Segar"}
-                        </td>
-                        <td className="py-4 px-4 text-[#5D6679] tnum">
-                          {p.assignedUserNames[0] ? "9867545" + (100 + idx) : "9867545361"}
-                        </td>
-                        <td className="py-4 px-4 text-[#5D6679]">
-                          {p.publicName.toLowerCase().replace(/\s+/g, "")}@agrichain.id
-                        </td>
-                        <td
-                          className={`py-4 px-4 text-xs font-semibold ${
-                            isTaking ? "text-[#10B981]" : "text-[#EF4444]"
-                          }`}
-                        >
-                          {type}
-                        </td>
-                        <td className="py-4 pl-4 text-right text-[#5D6679] tnum">
-                          {idx % 2 === 0 ? (idx + 1) * 3 : "-"}
-                        </td>
-                      </tr>
-                    );
-                  })
-                : sampleSuppliers.map((s, idx) => (
-                    <tr key={idx} className="hover:bg-[#F9FAFB]">
-                      <td className="py-4 pr-4 font-medium">{s.name}</td>
-                      <td className="py-4 px-4 text-[#5D6679]">{s.product}</td>
-                      <td className="py-4 px-4 text-[#5D6679] tnum">{s.phone}</td>
-                      <td className="py-4 px-4 text-[#5D6679]">{s.email}</td>
-                      <td
-                        className={`py-4 px-4 text-xs font-semibold ${
-                          s.type === "Taking Return" ? "text-[#10B981]" : "text-[#EF4444]"
-                        }`}
-                      >
-                        {s.type}
-                      </td>
-                      <td className="py-4 pl-4 text-right text-[#5D6679] tnum">{s.onTheWay}</td>
-                    </tr>
-                  ))}
-            </tbody>
-          </table>
-        </div>
+        {/* Data Table */}
+        <DistributionPointsTable points={points} batches={activeBatches} />
 
-        {/* Footer: Pagination (Persis 05-distribution-points.png) */}
+        {/* Footer */}
         <div className="flex items-center justify-between border-t border-[#F0F1F3] pt-4 mt-2">
           <button
             type="button"
@@ -190,7 +95,7 @@ export default async function DistributionPointsPage() {
           >
             Previous
           </button>
-          <span className="text-xs font-medium text-[#5D6679]">Page 1 of 10</span>
+          <span className="text-xs font-medium text-[#5D6679]">Page 1 of 1</span>
           <button
             type="button"
             className="rounded-lg border border-[#D0D5DD] bg-white px-3.5 py-2 text-xs font-medium text-[#344054] hover:bg-gray-50 shadow-2xs"

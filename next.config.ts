@@ -23,6 +23,9 @@ const csp = [
 const nextConfig: NextConfig = {
   // PGlite (WASM fs access) tidak boleh di-bundle — import.meta.url pecah
   serverExternalPackages: ["@electric-sql/pglite", "@node-rs/argon2"],
+  experimental: {
+    optimizePackageImports: ["lucide-react", "recharts", "motion"],
+  },
   async headers() {
     return [
       {

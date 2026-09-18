@@ -245,6 +245,7 @@ export async function cancelHandoff(
   db: DbAdapter,
   session: Session,
 ): Promise<{ transactionReferenceId: string }> {
+  if (!session.user.mfaVerified) throw new ActionError("MFA_REQUIRED");
   const intents = await db.query<{
     id: string;
     sender_wallet: string;

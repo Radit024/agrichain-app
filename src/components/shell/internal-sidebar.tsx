@@ -3,38 +3,28 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
-import {
-  Home,
-  ShoppingCart,
-  BarChart3,
-  UserCircle2,
-  Package,
-  Store,
-  Settings,
-  LogOut,
-} from "lucide-react";
+import { Home, Boxes, Truck, MapPin, BarChart3, Settings, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { motion } from "motion/react";
 import { HexagonBrandLogo, BrandWordmark } from "@/components/brand/brand-logo";
 
 /**
- * Sidebar presisi persis foto referensi 02-dashboard.png:
- * - Logo heksagon cyan/biru + wordmark biru bold
- * - Menu: Dashboard, Inventory, Reports, Suppliers, Orders, Manage Store
- * - Bawah: Settings, Log Out
+ * Sidebar operasional ketertelusuran rantai pasok pangan:
+ * - Menu: Dashboard, Batch, Serah-terima, Titik Distribusi, Laporan
+ * - Bawah: Pengaturan, Keluar
  */
 
 const navItems = [
   { href: "/mainapp/dashboard", label: "Dashboard", icon: Home },
-  { href: "/mainapp/batch", label: "Inventory", icon: ShoppingCart },
-  { href: "/mainapp/laporan", label: "Reports", icon: BarChart3 },
-  { href: "/mainapp/titik-distribusi", label: "Suppliers", icon: UserCircle2 },
-  { href: "/mainapp/serah-terima", label: "Orders", icon: Package },
-  { href: "/mainapp/pengaturan", label: "Manage Store", icon: Store },
+  { href: "/mainapp/batch", label: "Batch", icon: Boxes },
+  { href: "/mainapp/serah-terima", label: "Serah-terima", icon: Truck },
+  { href: "/mainapp/titik-distribusi", label: "Titik Distribusi", icon: MapPin },
+  { href: "/mainapp/laporan", label: "Laporan", icon: BarChart3 },
 ] as const;
 
 export function InternalSidebar({
-  displayName,
-  email,
+  displayName: _displayName,
+  email: _email,
 }: {
   displayName?: string;
   email?: string | null;
@@ -50,7 +40,7 @@ export function InternalSidebar({
       // Abaikan jika privy logout gagal atau tidak terotentikasi
     }
     await fetch("/api/auth/session", { method: "DELETE" });
-    window.location.href = "/masuk?logout=1";
+    router.push("/masuk?logout=1");
   }
 
   return (
@@ -80,20 +70,31 @@ export function InternalSidebar({
                 href={href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex items-center gap-3.5 rounded-lg px-4 py-3 text-sm font-medium transition-colors",
+                  "relative flex items-center gap-3.5 rounded-lg px-4 py-3 text-sm font-medium transition-colors duration-150 active:scale-[0.98]",
                   active
-                    ? "text-[#1570EF] font-semibold bg-[#EFF8FF]/60"
-                    : "text-[#5D6679] hover:text-[#1D2939] hover:bg-[#F9FAFB]",
+                    ? "text-[#1570EF] font-semibold"
+                    : "text-[#5D6679] hover:text-[#1D2939] hover:bg-[#F9FAFB]/70",
                 )}
               >
+                {active && (
+                  <motion.span
+                    layoutId="sidebarActivePill"
+                    className="pointer-events-none absolute inset-0 rounded-lg bg-[#EFF8FF] shadow-2xs"
+                    transition={{
+                      type: "spring",
+                      stiffness: 450,
+                      damping: 35,
+                    }}
+                  />
+                )}
                 <Icon
                   aria-hidden
                   className={cn(
-                    "size-5 shrink-0 transition-colors",
-                    active ? "text-[#1570EF]" : "text-[#5D6679]",
+                    "relative z-10 size-5 shrink-0 transition-transform duration-150",
+                    active ? "text-[#1570EF] scale-105" : "text-[#5D6679]",
                   )}
                 />
-                <span>{label}</span>
+                <span className="relative z-10">{label}</span>
               </Link>
             );
           })}
@@ -105,24 +106,42 @@ export function InternalSidebar({
         <Link
           href="/mainapp/pengaturan"
           className={cn(
-            "flex items-center gap-3.5 rounded-lg px-4 py-3 text-sm font-medium transition-colors",
+            "relative flex items-center gap-3.5 rounded-lg px-4 py-3 text-sm font-medium transition-colors duration-150 active:scale-[0.98]",
             pathname === "/mainapp/pengaturan"
-              ? "text-[#1570EF] font-semibold bg-[#EFF8FF]/60"
+              ? "text-[#1570EF] font-semibold"
               : "text-[#5D6679] hover:text-[#1D2939] hover:bg-[#F9FAFB]",
           )}
         >
-          <Settings aria-hidden className="size-5 shrink-0" />
-          <span>Settings</span>
+          {pathname === "/mainapp/pengaturan" && (
+            <motion.span
+              layoutId="sidebarActivePill"
+              className="pointer-events-none absolute inset-0 rounded-lg bg-[#EFF8FF] shadow-2xs"
+              transition={{
+                type: "spring",
+                stiffness: 450,
+                damping: 35,
+              }}
+            />
+          )}
+          <Settings
+            aria-hidden
+            className={cn(
+              "relative z-10 size-5 shrink-0 transition-transform duration-150",
+              pathname === "/mainapp/pengaturan" ? "text-[#1570EF] scale-105" : "text-[#5D6679]",
+            )}
+          />
+          <span className="relative z-10">Pengaturan</span>
         </Link>
 
-        <button
+        <motion.button
           type="button"
+          whileTap={{ scale: 0.97 }}
           onClick={handleLogout}
-          className="flex w-full items-center gap-3.5 rounded-lg px-4 py-3 text-sm font-medium text-[#5D6679] hover:bg-[#F9FAFB] hover:text-[#EF4444] transition-colors"
+          className="flex w-full items-center gap-3.5 rounded-lg px-4 py-3 text-sm font-medium text-[#5D6679] hover:bg-[#FEF3F2] hover:text-[#EF4444] transition-colors duration-150 cursor-pointer"
         >
           <LogOut aria-hidden className="size-5 shrink-0" />
-          <span>Log Out</span>
-        </button>
+          <span>Keluar</span>
+        </motion.button>
       </div>
     </aside>
   );

@@ -15,6 +15,8 @@ export interface DashboardMetrics {
   atRisk: number;
   inDistribution: number;
   registeredToday: number;
+  activePointsCount: number;
+  totalPointsCount: number;
   sahAttempts: number;
   tidakSahAttempts: number;
   anomaliAttempts: number;
@@ -54,6 +56,8 @@ export async function getDashboardMetrics(
       atRisk: 0,
       inDistribution: 0,
       registeredToday: 0,
+      activePointsCount: 0,
+      totalPointsCount: 0,
       sahAttempts: 0,
       tidakSahAttempts: 0,
       anomaliAttempts: 0,
@@ -178,6 +182,19 @@ export async function getDashboardMetrics(
     [orgIds],
   );
 
+  const pointCounts = await db.query<{
+    total: number;
+    active: number;
+  }>(
+    `select
+       count(*)::int as total,
+       count(*) filter (where is_active = true)::int as active
+     from distribution_points
+     where org_id = any($1::uuid[])`,
+    [orgIds],
+  );
+  const pc = pointCounts[0] ?? { total: 0, active: 0 };
+
   return {
     activeBatches: c.active_batches,
     awaitingReception: c.awaiting_reception,
@@ -185,6 +202,8 @@ export async function getDashboardMetrics(
     atRisk: c.at_risk,
     inDistribution: c.in_distribution,
     registeredToday: c.registered_today,
+    activePointsCount: pc.active,
+    totalPointsCount: pc.total,
     sahAttempts: at.sah,
     tidakSahAttempts: at.tidak_sah,
     anomaliAttempts: at.anomali,
@@ -355,6 +374,21 @@ export interface BatchDetail {
     deviceHealth: string;
     values: Array<{ code: string; unit: string; valuePPM: string | null }>;
   } | null;
+  evaluationHistory: Array<{
+    id: string;
+    conditionStatus: string;
+    dataQualityStatus: string;
+    reasons: string[];
+    alerts: string[];
+    evaluatedAt: string;
+  }>;
+  recentReadings: Array<{
+    id: string;
+    readAt: string;
+    deviceHealth: string;
+    scenario: string | null;
+    values: Array<{ code: string; unit: string; valuePPM: string | null }>;
+  }>;
   handoffs: Array<{
     fromStage: number;
     toStage: number;
@@ -407,36 +441,47 @@ export async function getBatchDetail(
   if (!session.memberships.some((m) => m.orgId === b.org_id)) return null;
 
   const evalRows = await db.query<{
+    id: string;
     condition_status: string;
     data_quality_status: string;
     reasons: string[];
     operational_alerts: string[];
     created_at: string;
   }>(
-    `select condition_status, data_quality_status, reasons, operational_alerts, created_at
-     from condition_evaluations where batch_id = $1 order by created_at desc limit 1`,
+    `select id, condition_status, data_quality_status, reasons, operational_alerts, created_at
+     from condition_evaluations where batch_id = $1 order by created_at desc limit 10`,
     [batchId],
   );
 
   const readingRows = await db.query<{
+    id: string;
     read_at: string;
     device_health: string;
+    scenario: string | null;
   }>(
-    `select read_at, device_health from condition_readings
-     where batch_id = $1 order by read_at desc limit 1`,
+    `select id, read_at, device_health, scenario from condition_readings
+     where batch_id = $1 order by read_at desc limit 15`,
     [batchId],
   );
+  const readingIds = readingRows.map((r) => r.id);
+  const measurements =
+    readingIds.length > 0
+      ? await db.query<{
+          reading_id: string;
+          parameter_code: string;
+          unit: string;
+          value_ppm: string | null;
+        }>(
+          `select m.reading_id, m.parameter_code, d.unit, m.value_ppm
+           from condition_measurements m
+           join monitoring_parameter_definitions d on d.code = m.parameter_code
+           where m.reading_id = any($1::uuid[])`,
+          [readingIds],
+        )
+      : [];
+
   const reading = readingRows[0] ?? null;
-  const measurements = reading
-    ? await db.query<{ parameter_code: string; unit: string; value_ppm: string | null }>(
-        `select m.parameter_code, d.unit, m.value_ppm
-         from condition_measurements m
-         join monitoring_parameter_definitions d on d.code = m.parameter_code
-         where m.reading_id = (select id from condition_readings
-            where batch_id = $1 order by read_at desc limit 1)`,
-        [batchId],
-      )
-    : [];
+  const latestMeasurements = reading ? measurements.filter((m) => m.reading_id === reading.id) : [];
 
   const handoffs = await db.query<{
     from_stage: number;
@@ -498,13 +543,34 @@ export async function getBatchDetail(
       ? {
           readAt: reading.read_at,
           deviceHealth: reading.device_health,
-          values: measurements.map((m) => ({
+          values: latestMeasurements.map((m) => ({
             code: m.parameter_code,
             unit: m.unit,
             valuePPM: m.value_ppm,
           })),
         }
       : null,
+    evaluationHistory: evalRows.map((e) => ({
+      id: e.id,
+      conditionStatus: e.condition_status,
+      dataQualityStatus: e.data_quality_status,
+      reasons: e.reasons,
+      alerts: e.operational_alerts,
+      evaluatedAt: e.created_at,
+    })),
+    recentReadings: readingRows.map((r) => ({
+      id: r.id,
+      readAt: r.read_at,
+      deviceHealth: r.device_health,
+      scenario: r.scenario,
+      values: measurements
+        .filter((m) => m.reading_id === r.id)
+        .map((m) => ({
+          code: m.parameter_code,
+          unit: m.unit,
+          valuePPM: m.value_ppm,
+        })),
+    })),
     handoffs: handoffs.map((h) => ({
       fromStage: h.from_stage,
       toStage: h.to_stage,
@@ -665,8 +731,9 @@ export interface DistributionPointItem {
   publicName: string;
   isActive: boolean;
   internalNotes: string | null;
-  schedules: Array<{ weekday: number; start: string; end: string }>;
+  schedules: Array<{ id: string; weekday: number; start: string; end: string }>;
   assignedUserNames: string[];
+  activeAccessCodesCount: number;
 }
 
 const weekdayNames = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
@@ -703,17 +770,19 @@ export async function listDistributionPoints(
     internalNotes: r.internal_notes,
     schedules: [] as DistributionPointItem["schedules"],
     assignedUserNames: [] as string[],
+    activeAccessCodesCount: 0,
   }));
   if (points.length === 0) return points;
 
   const pointIds = points.map((p) => p.id);
   const schedules = await db.query<{
+    id: string;
     point_id: string;
     weekday: number;
     start_time: string;
     end_time: string;
   }>(
-    `select point_id, weekday, start_time::text as start_time, end_time::text as end_time
+    `select id, point_id, weekday, start_time::text as start_time, end_time::text as end_time
      from distribution_point_schedules where point_id = any($1::uuid[]) order by weekday, start_time`,
     [pointIds],
   );
@@ -721,6 +790,7 @@ export async function listDistributionPoints(
     const p = points.find((x) => x.id === s.point_id);
     if (p)
       p.schedules.push({
+        id: s.id,
         weekday: s.weekday,
         start: s.start_time.slice(0, 5),
         end: s.end_time.slice(0, 5),
@@ -736,6 +806,18 @@ export async function listDistributionPoints(
     const p = points.find((x) => x.id === a.point_id);
     if (p) p.assignedUserNames.push(a.display_name);
   }
+
+  const accessCounts = await db.query<{ point_id: string; cnt: number }>(
+    `select point_id, count(*)::int as cnt from access_codes
+     where point_id = any($1::uuid[]) and valid_until > now()
+     group by point_id`,
+    [pointIds],
+  );
+  for (const ac of accessCounts) {
+    const p = points.find((x) => x.id === ac.point_id);
+    if (p) p.activeAccessCodesCount = ac.cnt;
+  }
+
   return points;
 }
 

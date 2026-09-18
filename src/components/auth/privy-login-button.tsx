@@ -288,85 +288,48 @@ function PrivyLoginControl() {
 
       {/* Header Section */}
       <header className="mb-6 text-center">
-        <h1 className="text-2xl font-bold tracking-tight text-[#1D2939]">Log in to your account</h1>
-        <p className="mt-1.5 text-xs text-[#667085]">Welcome back! Please enter your details.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-[#1D2939]">
+          Masuk Petugas Rantai Pasok
+        </h1>
+        <p className="mt-1.5 text-xs text-[#667085]">
+          Akses internal hanya untuk petugas yang menerima undangan.
+        </p>
       </header>
 
-      {/* Inputs (Visual Match with 01-authentication.png) */}
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleGoogleLogin();
-        }}
-        className="space-y-4"
-      >
-        <div className="space-y-1.5 text-left">
-          <label className="text-xs font-semibold text-[#344054]">
-            Email<span className="text-[#EF4444]">*</span>
-          </label>
-          <input
-            type="email"
-            placeholder="Enter your email"
-            defaultValue="admin@agrichain.id"
-            className="h-10 w-full rounded-lg border border-[#D0D5DD] bg-white px-3.5 text-sm text-[#1D2939] placeholder-[#858D9D] focus:border-[#1570EF] focus:outline-none focus:ring-1 focus:ring-[#1570EF]"
-          />
-        </div>
-
-        <div className="space-y-1.5 text-left">
-          <label className="text-xs font-semibold text-[#344054]">
-            Password<span className="text-[#EF4444]">*</span>
-          </label>
-          <input
-            type="password"
-            placeholder="••••••••"
-            defaultValue="password123"
-            className="h-10 w-full rounded-lg border border-[#D0D5DD] bg-white px-3.5 text-sm text-[#1D2939] placeholder-[#858D9D] focus:border-[#1570EF] focus:outline-none focus:ring-1 focus:ring-[#1570EF]"
-          />
-        </div>
-
-        <div className="flex items-center justify-between text-xs pt-1">
-          <label className="flex items-center gap-2 cursor-pointer text-[#475467]">
-            <input
-              type="checkbox"
-              defaultChecked
-              className="size-4 rounded border-[#D0D5DD] text-[#1570EF] focus:ring-[#1570EF]"
-            />
-            <span>Remember for 30 days</span>
-          </label>
-          <a href="#" className="font-semibold text-[#1570EF] hover:underline">
-            Forgot password
-          </a>
-        </div>
-
-        {/* Primary Sign In Button */}
+      {/* Action Buttons */}
+      <div className="space-y-3">
+        {/* Primary Privy Login Button */}
         <button
           type="button"
           onClick={handleGoogleLogin}
           disabled={!ready || loginState === "loading"}
-          className="h-11 w-full rounded-lg bg-[#1570EF] hover:bg-[#004EEB] text-sm font-semibold text-white transition-colors shadow-xs cursor-pointer disabled:opacity-60"
-        >
-          {loginState === "loading" ? "Signing in…" : "Sign in"}
-        </button>
-
-        {/* Sign in with Google (Privy) */}
-        <button
-          type="button"
-          disabled={!ready || loginState === "loading"}
-          onClick={handleGoogleLogin}
-          className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-[#D0D5DD] bg-white text-sm font-semibold text-[#344054] transition-colors hover:bg-gray-50 active:scale-[0.99] cursor-pointer disabled:opacity-60 shadow-2xs"
+          className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg bg-[#1570EF] hover:bg-[#004EEB] text-sm font-semibold text-white transition-colors shadow-xs cursor-pointer disabled:opacity-60"
         >
           <GoogleIcon className="size-4.5" />
-          <span>Sign in with Google</span>
+          <span>{loginState === "loading" ? "Menyiapkan login…" : "Lanjutkan dengan Google"}</span>
         </button>
-      </form>
 
-      {/* Bottom Sign up link */}
-      <p className="mt-6 text-center text-xs text-[#475467]">
-        Don&apos;t have an account?{" "}
-        <a href="#" className="font-semibold text-[#1570EF] hover:underline">
-          Sign up
-        </a>
-      </p>
+        {/* Email Login via Privy */}
+        <button
+          type="button"
+          onClick={handleGoogleLogin}
+          disabled={!ready || loginState === "loading"}
+          className="flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-[#D0D5DD] bg-white text-sm font-semibold text-[#344054] transition-colors hover:bg-gray-50 active:scale-[0.99] cursor-pointer disabled:opacity-60 shadow-2xs"
+        >
+          <span>Lanjutkan dengan Email</span>
+        </button>
+
+        {/* Dev Grant Access Button in dev environment */}
+        {process.env.NODE_ENV !== "production" ? <DevGrantButton /> : null}
+      </div>
+
+      {/* Domain Context & Security Note */}
+      <div className="mt-6 rounded-lg border border-[#F0F1F3] bg-[#F9FAFB] p-3 text-left">
+        <p className="text-[11px] leading-relaxed text-[#667085]">
+          Autentikasi diamankan oleh <strong>Privy</strong> dengan <em>embedded wallet</em>. Setiap
+          tindakan pendaftaran batch dan serah-terima distribusi dicatat ke jejak audit on-chain.
+        </p>
+      </div>
     </div>
   );
 }

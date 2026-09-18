@@ -52,7 +52,11 @@ export function DistributionStatusBadge({ value }: { value: DistributionBadgeVal
   const m = distributionMap[value];
   return (
     <StatusBadge tone={m.tone}>
-      <span aria-hidden className="size-1.5 rounded-full bg-current" />
+      {value === "DALAM_DISTRIBUSI" ? (
+        <span aria-hidden className="size-1.5 rounded-full bg-current ring-2 ring-current/30" />
+      ) : (
+        <span aria-hidden className="size-1.5 rounded-full bg-current" />
+      )}
       {m.label}
     </StatusBadge>
   );
@@ -72,7 +76,11 @@ export function ConditionStatusBadge({ value }: { value: ConditionBadgeValue }) 
   const m = conditionMap[value];
   return (
     <StatusBadge tone={m.tone}>
-      <span aria-hidden className={cn("size-1.5 rounded-full", m.dot)} />
+      {value === "AT_RISK" ? (
+        <span aria-hidden className={cn("size-1.5 rounded-full ring-2 ring-current/30", m.dot)} />
+      ) : (
+        <span aria-hidden className={cn("size-1.5 rounded-full", m.dot)} />
+      )}
       {m.label}
     </StatusBadge>
   );
@@ -148,7 +156,11 @@ export function HandoffIntentBadge({ value }: { value: HandoffIntentBadgeValue }
   const m = handoffMap[value];
   return (
     <StatusBadge tone={m.tone}>
-      <span aria-hidden className="size-1.5 rounded-full bg-current" />
+      {value === "PENDING" ? (
+        <span aria-hidden className="size-1.5 rounded-full bg-current ring-2 ring-current/30" />
+      ) : (
+        <span aria-hidden className="size-1.5 rounded-full bg-current" />
+      )}
       {m.label}
     </StatusBadge>
   );

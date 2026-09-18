@@ -27,7 +27,7 @@ export function AuthSplitLayout({
       <section className="hidden min-h-screen items-center justify-center border-r border-[#F0F1F3] bg-white lg:flex lg:px-12">
         <div className="flex flex-col items-center text-center">
           <HexagonBrandLogo className="size-40" />
-          <p className="mt-8 text-3xl font-black tracking-widest text-[#1570EF]">AGRICHAIN</p>
+          <p className="mt-8 text-3xl font-black tracking-widest text-[#1570EF]">AGRILINK</p>
         </div>
       </section>
 

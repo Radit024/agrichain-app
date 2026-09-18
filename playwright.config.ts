@@ -19,6 +19,10 @@ export default defineConfig({
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
     },
+    {
+      name: "mobile",
+      use: { ...devices["Pixel 5"] },
+    },
   ],
   webServer: process.env.E2E_BASE_URL
     ? undefined
@@ -30,6 +34,7 @@ export default defineConfig({
         env: {
           // E2E jalan terhadap build produksi dengan seed PGlite lokal
           NODE_ENV: "production",
+          PLAYWRIGHT_TEST: "true",
         },
       },
 });

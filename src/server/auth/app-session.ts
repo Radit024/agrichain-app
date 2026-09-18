@@ -4,7 +4,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { appUserDirectory } from "./directory";
 import { requireSession, type Session } from "./session";
 
-export const APP_SESSION_COOKIE = "agrichain_session";
+export const APP_SESSION_COOKIE = "agrilink_session";
 const SESSION_TTL_SECONDS = 60 * 60;
 
 type SessionEnvelope = { accessToken: string; expiresAt: number };

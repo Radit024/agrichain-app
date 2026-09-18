@@ -2,24 +2,26 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import {
-  Calendar,
-  ChevronDown,
-  TrendingUp,
-  BarChart2,
-  Package,
-  MapPin,
-  ShoppingBag,
-  Home,
-  XCircle,
-  RotateCcw,
-  Users,
-  FileText,
   Boxes,
+  MapPin,
+  TrendingUp,
+  ShieldCheck,
+  AlertTriangle,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  Calendar,
+  Users,
+  Activity,
+  ArrowRight,
 } from "lucide-react";
 import { APP_SESSION_COOKIE, readAppSession } from "@/server/auth/app-session";
-import { getDashboardMetrics, listDistributionPoints } from "@/server/queries/internal";
+import { getDashboardMetrics } from "@/server/queries/internal";
 import { getDbAdapter } from "@/server/db/adapter";
-import { SalesPurchaseBarChart, OrderSummaryCurveChart } from "@/components/shared/trend-charts";
+import { ConditionBarChart, HandoffTrendChart } from "@/components/shared/trend-charts";
+import { DistributionStatusBadge, ConditionStatusBadge } from "@/components/status/status-badges";
+import { formatDateTime } from "@/components/shared/handoff-timeline";
+import { StaggerContainer, StaggerItem, MotionCard } from "@/components/motion/motion-container";
 
 export const metadata: Metadata = { title: "Dashboard" };
 export const dynamic = "force-dynamic";
@@ -29,238 +31,270 @@ export default async function DashboardPage() {
   if (!session) return null;
   const db = await getDbAdapter();
 
-  const [m, points] = await Promise.all([
-    getDashboardMetrics(db, session),
-    listDistributionPoints(db, session),
-  ]);
+  const m = await getDashboardMetrics(db, session);
 
-  const activePointsCount = points.filter((p) => p.isActive).length;
+  const activePointsCount = m.activePointsCount;
   const totalAccess = m.sahAttempts + m.tidakSahAttempts + m.anomaliAttempts;
 
   return (
-    <div className="space-y-6 pb-12">
-      {/* Row 1: Sales Overview (Kiri) + Inventory Summary (Kanan) */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        {/* Sales Overview */}
-        <section className="rounded-xl border border-[#F0F1F3] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] lg:col-span-8">
-          <h2 className="text-base font-semibold text-[#1D2939]">Sales Overview</h2>
+    <StaggerContainer className="space-y-6 pb-12">
+      {/* Row 1: Ringkasan Distribusi (Kiri) + Status Kondisi Batch (Kanan) */}
+      <StaggerItem className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        {/* Distribusi & Kustodi Overview */}
+        <MotionCard className="rounded-xl border border-[#F0F1F3] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] transition-all duration-200 hover:border-[#E4E7EC] hover:shadow-[0_4px_12px_rgba(0,0,0,0.04)] lg:col-span-8">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-semibold text-[#1D2939]">Distribusi & Kustodi</h2>
+            <Link
+              href="/mainapp/batch"
+              className="group inline-flex items-center gap-1 text-xs font-semibold text-[#1570EF] hover:underline"
+            >
+              Lihat Batch{" "}
+              <ArrowRight className="size-3 transition-transform duration-150 group-hover:translate-x-0.5" />
+            </Link>
+          </div>
+
           <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {/* Sales */}
+            {/* Batch Aktif */}
             <div>
               <div className="flex size-9 items-center justify-center rounded-lg bg-[#E0F2FE] text-[#1570EF]">
-                <ShoppingBag className="size-4.5" />
+                <Boxes className="size-4.5" />
               </div>
               <div className="mt-3 flex items-baseline gap-2">
-                <span className="font-bold text-base text-[#1D2939] tnum">
-                  Rp {m.activeBatches ? (m.activeBatches * 104).toLocaleString("id-ID") : "832"}
-                </span>
-                <span className="text-xs text-[#858D9D]">Sales</span>
+                <span className="font-bold text-base text-[#1D2939] tnum">{m.activeBatches}</span>
+                <span className="text-xs text-[#858D9D]">Batch Aktif</span>
               </div>
             </div>
 
-            {/* Revenue */}
+            {/* Dalam Distribusi */}
             <div>
-              <div className="flex size-9 items-center justify-center rounded-lg bg-[#F3E8FF] text-[#845EC2]">
-                <BarChart2 className="size-4.5" />
-              </div>
-              <div className="mt-3 flex items-baseline gap-2">
-                <span className="font-bold text-base text-[#1D2939] tnum">Rp 18.300</span>
-                <span className="text-xs text-[#858D9D]">Revenue</span>
-              </div>
-            </div>
-
-            {/* Profit */}
-            <div>
-              <div className="flex size-9 items-center justify-center rounded-lg bg-[#FFEDD5] text-[#F97316]">
+              <div className="flex size-9 items-center justify-center rounded-lg bg-[#EFF8FF] text-[#1570EF]">
                 <TrendingUp className="size-4.5" />
               </div>
               <div className="mt-3 flex items-baseline gap-2">
-                <span className="font-bold text-base text-[#1D2939] tnum">Rp 868</span>
-                <span className="text-xs text-[#858D9D]">Profit</span>
+                <span className="font-bold text-base text-[#1D2939] tnum">{m.inDistribution}</span>
+                <span className="text-xs text-[#858D9D]">Di Perjalanan</span>
               </div>
             </div>
 
-            {/* Cost */}
+            {/* Menunggu Penerimaan */}
             <div>
-              <div className="flex size-9 items-center justify-center rounded-lg bg-[#DCFCE7] text-[#10B981]">
-                <Home className="size-4.5" />
-              </div>
-              <div className="mt-3 flex items-baseline gap-2">
-                <span className="font-bold text-base text-[#1D2939] tnum">Rp 17.432</span>
-                <span className="text-xs text-[#858D9D]">Cost</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Inventory Summary */}
-        <section className="rounded-xl border border-[#F0F1F3] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] lg:col-span-4">
-          <h2 className="text-base font-semibold text-[#1D2939]">Inventory Summary</h2>
-          <div className="mt-5 grid grid-cols-2 gap-4">
-            {/* Quantity in Hand */}
-            <div className="flex flex-col items-center text-center">
               <div className="flex size-9 items-center justify-center rounded-lg bg-[#FFEDD5] text-[#F97316]">
-                <Package className="size-4.5" />
-              </div>
-              <span className="mt-2.5 font-bold text-base text-[#1D2939] tnum">
-                {m.inDistribution ? m.inDistribution * 100 + 68 : "868"}
-              </span>
-              <span className="mt-0.5 text-xs text-[#858D9D]">Quantity in Hand</span>
-            </div>
-
-            {/* To be received */}
-            <div className="flex flex-col items-center text-center">
-              <div className="flex size-9 items-center justify-center rounded-lg bg-[#F3E8FF] text-[#845EC2]">
-                <MapPin className="size-4.5" />
-              </div>
-              <span className="mt-2.5 font-bold text-base text-[#1D2939] tnum">
-                {m.awaitingReception ? m.awaitingReception * 50 : "200"}
-              </span>
-              <span className="mt-0.5 text-xs text-[#858D9D]">To be received</span>
-            </div>
-          </div>
-        </section>
-      </div>
-
-      {/* Row 2: Purchase Overview (Kiri) + Product Summary (Kanan) */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        {/* Purchase Overview */}
-        <section className="rounded-xl border border-[#F0F1F3] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] lg:col-span-8">
-          <h2 className="text-base font-semibold text-[#1D2939]">Purchase Overview</h2>
-          <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {/* Purchase */}
-            <div>
-              <div className="flex size-9 items-center justify-center rounded-lg bg-[#E0F2FE] text-[#1570EF]">
-                <ShoppingBag className="size-4.5" />
+                <Clock className="size-4.5" />
               </div>
               <div className="mt-3 flex items-baseline gap-2">
                 <span className="font-bold text-base text-[#1D2939] tnum">
-                  {totalAccess || "82"}
+                  {m.awaitingReception}
                 </span>
-                <span className="text-xs text-[#858D9D]">Purchase</span>
+                <span className="text-xs text-[#858D9D]">Menunggu Handoff</span>
               </div>
             </div>
 
-            {/* Cost */}
+            {/* Didaftarkan Hari Ini */}
             <div>
               <div className="flex size-9 items-center justify-center rounded-lg bg-[#DCFCE7] text-[#10B981]">
-                <Home className="size-4.5" />
+                <Calendar className="size-4.5" />
               </div>
               <div className="mt-3 flex items-baseline gap-2">
-                <span className="font-bold text-base text-[#1D2939] tnum">Rp 13.573</span>
-                <span className="text-xs text-[#858D9D]">Cost</span>
+                <span className="font-bold text-base text-[#1D2939] tnum">{m.registeredToday}</span>
+                <span className="text-xs text-[#858D9D]">Didaftarkan Hari Ini</span>
+              </div>
+            </div>
+          </div>
+        </MotionCard>
+
+        {/* Status Kepatuhan Batch */}
+        <MotionCard className="rounded-xl border border-[#F0F1F3] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] transition-all duration-200 hover:border-[#E4E7EC] hover:shadow-[0_4px_12px_rgba(0,0,0,0.04)] lg:col-span-4">
+          <h2 className="text-base font-semibold text-[#1D2939]">Kepatuhan Kondisi</h2>
+          <div className="mt-5 grid grid-cols-2 gap-4">
+            {/* Compliant */}
+            <div className="flex flex-col items-center text-center">
+              <div className="flex size-9 items-center justify-center rounded-lg bg-[#DCFCE7] text-[#10B981]">
+                <CheckCircle2 className="size-4.5" />
+              </div>
+              <span className="mt-2.5 font-bold text-base text-[#10B981] tnum">{m.compliant}</span>
+              <span className="mt-0.5 text-xs text-[#858D9D]">Compliant</span>
+            </div>
+
+            {/* AT_RISK */}
+            <div className="flex flex-col items-center text-center">
+              <div className="flex size-9 items-center justify-center rounded-lg bg-[#FEE2E2] text-[#EF4444]">
+                <AlertTriangle className="size-4.5" />
+              </div>
+              <span className="mt-2.5 font-bold text-base text-[#EF4444] tnum">{m.atRisk}</span>
+              <span className="mt-0.5 text-xs text-[#858D9D]">AT Risk</span>
+            </div>
+          </div>
+        </MotionCard>
+      </StaggerItem>
+
+      {/* Row 2: Verifikasi Akses Petugas (Kiri) + Titik Distribusi (Kanan) */}
+      <StaggerItem className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        {/* Verifikasi Akses Overview */}
+        <MotionCard className="rounded-xl border border-[#F0F1F3] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] transition-all duration-200 hover:border-[#E4E7EC] hover:shadow-[0_4px_12px_rgba(0,0,0,0.04)] lg:col-span-8">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-semibold text-[#1D2939]">
+              Verifikasi Akses Petugas (7 Hari Terakhir)
+            </h2>
+            <Link
+              href="/mainapp/verifikasi"
+              className="group inline-flex items-center gap-1 text-xs font-semibold text-[#1570EF] hover:underline"
+            >
+              Verifikasi Baru{" "}
+              <ArrowRight className="size-3 transition-transform duration-150 group-hover:translate-x-0.5" />
+            </Link>
+          </div>
+
+          <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4">
+            {/* Total Attempt */}
+            <div>
+              <div className="flex size-9 items-center justify-center rounded-lg bg-[#E0F2FE] text-[#1570EF]">
+                <Activity className="size-4.5" />
+              </div>
+              <div className="mt-3 flex items-baseline gap-2">
+                <span className="font-bold text-base text-[#1D2939] tnum">{totalAccess}</span>
+                <span className="text-xs text-[#858D9D]">Total Verifikasi</span>
               </div>
             </div>
 
-            {/* Cancel */}
+            {/* SAH */}
             <div>
-              <div className="flex size-9 items-center justify-center rounded-lg bg-[#F3E8FF] text-[#845EC2]">
+              <div className="flex size-9 items-center justify-center rounded-lg bg-[#DCFCE7] text-[#10B981]">
+                <ShieldCheck className="size-4.5" />
+              </div>
+              <div className="mt-3 flex items-baseline gap-2">
+                <span className="font-bold text-base text-[#10B981] tnum">{m.sahAttempts}</span>
+                <span className="text-xs text-[#858D9D]">SAH</span>
+              </div>
+            </div>
+
+            {/* TIDAK SAH */}
+            <div>
+              <div className="flex size-9 items-center justify-center rounded-lg bg-[#FFEDD5] text-[#F97316]">
                 <XCircle className="size-4.5" />
               </div>
               <div className="mt-3 flex items-baseline gap-2">
-                <span className="font-bold text-base text-[#1D2939] tnum">
-                  {m.tidakSahAttempts || "5"}
+                <span className="font-bold text-base text-[#F97316] tnum">
+                  {m.tidakSahAttempts}
                 </span>
-                <span className="text-xs text-[#858D9D]">Cancel</span>
+                <span className="text-xs text-[#858D9D]">TIDAK SAH</span>
               </div>
             </div>
 
-            {/* Return */}
+            {/* ANOMALI */}
             <div>
-              <div className="flex size-9 items-center justify-center rounded-lg bg-[#FFEDD5] text-[#F97316]">
-                <RotateCcw className="size-4.5" />
+              <div className="flex size-9 items-center justify-center rounded-lg bg-[#FEE2E2] text-[#EF4444]">
+                <AlertTriangle className="size-4.5" />
               </div>
               <div className="mt-3 flex items-baseline gap-2">
-                <span className="font-bold text-base text-[#1D2939] tnum">Rp 17.432</span>
-                <span className="text-xs text-[#858D9D]">Return</span>
+                <span className="font-bold text-base text-[#EF4444] tnum">{m.anomaliAttempts}</span>
+                <span className="text-xs text-[#858D9D]">ANOMALI</span>
               </div>
             </div>
           </div>
-        </section>
+        </MotionCard>
 
-        {/* Product Summary */}
-        <section className="rounded-xl border border-[#F0F1F3] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] lg:col-span-4">
-          <h2 className="text-base font-semibold text-[#1D2939]">Product Summary</h2>
+        {/* Infrastruktur Titik Distribusi */}
+        <MotionCard className="rounded-xl border border-[#F0F1F3] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] transition-all duration-200 hover:border-[#E4E7EC] hover:shadow-[0_4px_12px_rgba(0,0,0,0.04)] lg:col-span-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-semibold text-[#1D2939]">Titik Distribusi</h2>
+            <Link
+              href="/mainapp/titik-distribusi"
+              className="group inline-flex items-center gap-1 text-xs font-semibold text-[#1570EF] hover:underline"
+            >
+              Kelola{" "}
+              <ArrowRight className="size-3 transition-transform duration-150 group-hover:translate-x-0.5" />
+            </Link>
+          </div>
+
           <div className="mt-5 grid grid-cols-2 gap-4">
-            {/* Number of Suppliers */}
+            {/* Active Points */}
             <div className="flex flex-col items-center text-center">
               <div className="flex size-9 items-center justify-center rounded-lg bg-[#E0F2FE] text-[#1570EF]">
+                <MapPin className="size-4.5" />
+              </div>
+              <span className="mt-2.5 font-bold text-base text-[#1D2939] tnum">
+                {activePointsCount}
+              </span>
+              <span className="mt-0.5 text-xs text-[#858D9D]">Titik Aktif</span>
+            </div>
+
+            {/* Total Points */}
+            <div className="flex flex-col items-center text-center">
+              <div className="flex size-9 items-center justify-center rounded-lg bg-[#F3E8FF] text-[#845EC2]">
                 <Users className="size-4.5" />
               </div>
               <span className="mt-2.5 font-bold text-base text-[#1D2939] tnum">
-                {activePointsCount || "31"}
+                {m.totalPointsCount}
               </span>
-              <span className="mt-0.5 text-xs text-[#858D9D]">Number of Suppliers</span>
-            </div>
-
-            {/* Number of Categories */}
-            <div className="flex flex-col items-center text-center">
-              <div className="flex size-9 items-center justify-center rounded-lg bg-[#F3E8FF] text-[#845EC2]">
-                <FileText className="size-4.5" />
-              </div>
-              <span className="mt-2.5 font-bold text-base text-[#1D2939] tnum">21</span>
-              <span className="mt-0.5 text-xs text-[#858D9D]">Number of Categories</span>
+              <span className="mt-0.5 text-xs text-[#858D9D]">Total Terdaftar</span>
             </div>
           </div>
-        </section>
-      </div>
+        </MotionCard>
+      </StaggerItem>
 
-      {/* Row 3: Sales & Purchase (Kiri) + Order Summary (Kanan, border biru) */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        {/* Sales & Purchase Bar Chart */}
-        <section className="rounded-xl border border-[#F0F1F3] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] lg:col-span-8">
+      {/* Row 3: Tren Kepatuhan Kondisi (Kiri) + Tren Serah-terima Kustodi (Kanan) */}
+      <StaggerItem className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        {/* Tren Kepatuhan Kondisi Harian */}
+        <MotionCard className="rounded-xl border border-[#F0F1F3] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] transition-all duration-200 hover:border-[#E4E7EC] hover:shadow-[0_4px_12px_rgba(0,0,0,0.04)] lg:col-span-8">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold text-[#1D2939]">Sales & Purchase</h2>
-            <button
-              type="button"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-[#D0D5DD] bg-white px-3 py-1.5 text-xs font-medium text-[#5D6679] hover:bg-gray-50 shadow-2xs"
-            >
-              <Calendar className="size-3.5 text-[#858D9D]" />
-              <span>Weekly</span>
-              <ChevronDown className="size-3.5 text-[#858D9D]" />
-            </button>
-          </div>
-          <div className="mt-4">
-            <SalesPurchaseBarChart height={280} />
-            <div className="mt-3 flex items-center justify-center gap-6 text-xs text-[#5D6679]">
-              <span className="flex items-center gap-2">
-                <span className="size-2.5 rounded-full bg-[#5DD4EE]" /> Purchase
+            <div>
+              <h2 className="text-base font-semibold text-[#1D2939]">
+                Tren Evaluasi Kondisi (14 Hari)
+              </h2>
+              <p className="text-xs text-[#858D9D]">
+                Data kondisi hasil pembacaan berkala (Sumber: SIMULATOR).
+              </p>
+            </div>
+            <div className="flex items-center gap-4 text-xs text-[#5D6679]">
+              <span className="flex items-center gap-1.5">
+                <span className="size-2.5 rounded-full bg-[#10B981]" /> Sesuai Batas
               </span>
-              <span className="flex items-center gap-2">
-                <span className="size-2.5 rounded-full bg-[#10B981]" /> Sales
+              <span className="flex items-center gap-1.5">
+                <span className="size-2.5 rounded-full bg-[#F43F5E]" /> Di Luar Batas
               </span>
             </div>
           </div>
-        </section>
-
-        {/* Order Summary (dengan Border Biru #1570EF) */}
-        <section className="rounded-xl border-2 border-[#1570EF] bg-white p-5 shadow-[0_2px_8px_rgba(21,112,239,0.08)] lg:col-span-4 flex flex-col justify-between">
-          <h2 className="text-base font-semibold text-[#1D2939]">Order Summary</h2>
           <div className="mt-4">
-            <OrderSummaryCurveChart height={260} />
-            <div className="mt-3 flex items-center justify-center gap-6 text-xs text-[#5D6679]">
-              <span className="flex items-center gap-2">
-                <span className="size-2.5 rounded-full bg-[#F59E0B]" /> Ordered
-              </span>
-              <span className="flex items-center gap-2">
-                <span className="size-2.5 rounded-full bg-[#60A5FA]" /> Delivered
-              </span>
+            <ConditionBarChart data={m.conditionTrend} height={260} />
+          </div>
+        </MotionCard>
+
+        {/* Tren Serah-terima Kustodi */}
+        <MotionCard className="rounded-xl border border-[#F0F1F3] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] transition-all duration-200 hover:border-[#E4E7EC] hover:shadow-[0_4px_12px_rgba(0,0,0,0.04)] lg:col-span-4 flex flex-col justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-[#1D2939]">Tren Serah-terima (14 Hari)</h2>
+            <p className="text-xs text-[#858D9D]">Peristiwa transisi perpindahan stage kustodi.</p>
+            <div className="mt-4">
+              <HandoffTrendChart data={m.handoffTrend} height={210} />
             </div>
           </div>
-        </section>
-      </div>
+          <div className="mt-3 flex items-center justify-center gap-5 text-xs text-[#5D6679] border-t border-[#F0F1F3] pt-3">
+            <span className="flex items-center gap-1.5">
+              <span className="size-2 rounded-full bg-[#1570EF]" /> Inisiasi (Pending)
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="size-2 rounded-full bg-[#10B981]" /> Dikonfirmasi
+            </span>
+          </div>
+        </MotionCard>
+      </StaggerItem>
 
-      {/* Row 4: Top Selling Stock (Kiri) + Low Quantity Stock (Kanan) */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        {/* Top Selling Stock */}
-        <section className="rounded-xl border border-[#F0F1F3] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] lg:col-span-8">
+      {/* Row 4: Batch Perlu Perhatian (Kiri) + Peringatan Kondisi Terkini (Kanan) */}
+      <StaggerItem className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        {/* Batch Perlu Perhatian */}
+        <MotionCard className="rounded-xl border border-[#F0F1F3] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] transition-all duration-200 hover:border-[#E4E7EC] hover:shadow-[0_4px_12px_rgba(0,0,0,0.04)] lg:col-span-8">
           <div className="flex items-center justify-between border-b border-[#F0F1F3] pb-4">
-            <h2 className="text-base font-semibold text-[#1D2939]">Top Selling Stock</h2>
+            <div>
+              <h2 className="text-base font-semibold text-[#1D2939]">Batch Perlu Perhatian</h2>
+              <p className="text-xs text-[#858D9D]">
+                Batch dengan status AT_RISK, data tidak tersedia, atau serah-terima menunggu.
+              </p>
+            </div>
             <Link
               href="/mainapp/batch"
               className="text-xs font-semibold text-[#1570EF] hover:underline"
             >
-              See All
+              Semua Batch
             </Link>
           </div>
 
@@ -268,115 +302,95 @@ export default async function DashboardPage() {
             <table className="w-full text-left text-sm">
               <thead className="border-b border-[#F0F1F3] text-xs font-medium text-[#858D9D]">
                 <tr>
-                  <th className="py-3 pr-4">Name</th>
-                  <th className="py-3 px-4">Sold Quantity</th>
-                  <th className="py-3 px-4">Remaining Quantity</th>
-                  <th className="py-3 pl-4 text-right">Price</th>
+                  <th className="py-3 pr-4 font-normal">Kode Batch</th>
+                  <th className="py-3 px-4 font-normal">Komoditas</th>
+                  <th className="py-3 px-4 font-normal">Distribusi</th>
+                  <th className="py-3 px-4 font-normal">Kondisi</th>
+                  <th className="py-3 pl-4 text-right font-normal">Diperbarui</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#F0F1F3] text-[#1D2939]">
                 {m.attentionBatches.length > 0 ? (
-                  m.attentionBatches.slice(0, 4).map((b) => (
-                    <tr key={b.id} className="hover:bg-[#F9FAFB]">
-                      <td className="py-3.5 pr-4 font-medium">
+                  m.attentionBatches.map((b) => (
+                    <tr key={b.id} className="hover:bg-[#F9FAFB] transition-colors duration-150">
+                      <td className="py-3.5 pr-4 font-mono font-medium">
                         <Link href={`/mainapp/batch/${b.id}`} className="hover:text-[#1570EF]">
-                          {b.productName || b.batchCode}
+                          {b.batchCode}
                         </Link>
                       </td>
-                      <td className="py-3.5 px-4 text-[#5D6679] tnum">28</td>
-                      <td className="py-3.5 px-4 text-[#5D6679] tnum">14</td>
-                      <td className="py-3.5 pl-4 text-right font-medium tnum">Rp 140</td>
+                      <td className="py-3.5 px-4 text-[#5D6679] text-xs">{b.productName || "–"}</td>
+                      <td className="py-3.5 px-4 text-xs">
+                        <DistributionStatusBadge
+                          value={
+                            b.distributionStatus as "DIDAFTARKAN" | "DALAM_DISTRIBUSI" | "SELESAI"
+                          }
+                        />
+                      </td>
+                      <td className="py-3.5 px-4 text-xs">
+                        <ConditionStatusBadge
+                          value={b.conditionStatus as "NOT_EVALUATED" | "COMPLIANT" | "AT_RISK"}
+                        />
+                      </td>
+                      <td className="py-3.5 pl-4 text-right text-xs text-[#858D9D] tnum">
+                        {formatDateTime(b.updatedAt)}
+                      </td>
                     </tr>
                   ))
                 ) : (
-                  <>
-                    <tr className="hover:bg-[#F9FAFB]">
-                      <td className="py-3.5 pr-4 font-medium">Surf Excel</td>
-                      <td className="py-3.5 px-4 text-[#5D6679] tnum">30</td>
-                      <td className="py-3.5 px-4 text-[#5D6679] tnum">12</td>
-                      <td className="py-3.5 pl-4 text-right font-medium tnum">Rp 100</td>
-                    </tr>
-                    <tr className="hover:bg-[#F9FAFB]">
-                      <td className="py-3.5 pr-4 font-medium">Rin</td>
-                      <td className="py-3.5 px-4 text-[#5D6679] tnum">21</td>
-                      <td className="py-3.5 px-4 text-[#5D6679] tnum">15</td>
-                      <td className="py-3.5 pl-4 text-right font-medium tnum">Rp 207</td>
-                    </tr>
-                    <tr className="hover:bg-[#F9FAFB]">
-                      <td className="py-3.5 pr-4 font-medium">Parle G</td>
-                      <td className="py-3.5 px-4 text-[#5D6679] tnum">19</td>
-                      <td className="py-3.5 px-4 text-[#5D6679] tnum">17</td>
-                      <td className="py-3.5 pl-4 text-right font-medium tnum">Rp 105</td>
-                    </tr>
-                  </>
+                  <tr>
+                    <td colSpan={5} className="py-8 text-center text-xs text-[#858D9D]">
+                      Tidak ada batch yang memerlukan perhatian segera saat ini. Seluruh kondisi
+                      terpantau normal.
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>
           </div>
-        </section>
+        </MotionCard>
 
-        {/* Low Quantity Stock */}
-        <section className="rounded-xl border border-[#F0F1F3] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] lg:col-span-4 flex flex-col justify-between">
+        {/* Peringatan Kondisi Terkini */}
+        <MotionCard className="rounded-xl border border-[#F0F1F3] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] transition-all duration-200 hover:border-[#E4E7EC] hover:shadow-[0_4px_12px_rgba(0,0,0,0.04)] lg:col-span-4 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between border-b border-[#F0F1F3] pb-4">
-              <h2 className="text-base font-semibold text-[#1D2939]">Low Quantity Stock</h2>
-              <Link
-                href="/mainapp/batch"
-                className="text-xs font-semibold text-[#1570EF] hover:underline"
-              >
-                See All
-              </Link>
+              <h2 className="text-base font-semibold text-[#1D2939]">Peringatan Kondisi</h2>
+              <span className="rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-600">
+                {m.conditionAlerts.length} Terdeteksi
+              </span>
             </div>
 
-            <ul className="divide-y divide-[#F0F1F3] mt-1">
-              <li className="flex items-center justify-between py-3">
-                <div className="flex items-center gap-3">
-                  <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-[#FFF1F2] border border-[#FECDD3] text-[#E11D48] font-bold text-xs">
-                    SALT
-                  </div>
-                  <div>
-                    <p className="font-semibold text-sm text-[#1D2939]">Tata Salt</p>
-                    <p className="text-xs text-[#858D9D]">Remaining Quantity : 10 Packet</p>
-                  </div>
-                </div>
-                <span className="rounded-full bg-[#FEE2E2] px-2.5 py-0.5 text-xs font-semibold text-[#DC2626]">
-                  Low
-                </span>
-              </li>
-
-              <li className="flex items-center justify-between py-3">
-                <div className="flex items-center gap-3">
-                  <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-[#2563EB] font-bold text-xs">
-                    LAYS
-                  </div>
-                  <div>
-                    <p className="font-semibold text-sm text-[#1D2939]">Lays</p>
-                    <p className="text-xs text-[#858D9D]">Remaining Quantity : 15 Packet</p>
-                  </div>
-                </div>
-                <span className="rounded-full bg-[#FEE2E2] px-2.5 py-0.5 text-xs font-semibold text-[#DC2626]">
-                  Low
-                </span>
-              </li>
-
-              <li className="flex items-center justify-between py-3">
-                <div className="flex items-center gap-3">
-                  <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-[#2563EB] font-bold text-xs">
-                    LAYS
-                  </div>
-                  <div>
-                    <p className="font-semibold text-sm text-[#1D2939]">Lays</p>
-                    <p className="text-xs text-[#858D9D]">Remaining Quantity : 15 Packet</p>
-                  </div>
-                </div>
-                <span className="rounded-full bg-[#FEE2E2] px-2.5 py-0.5 text-xs font-semibold text-[#DC2626]">
-                  Low
-                </span>
-              </li>
-            </ul>
+            {m.conditionAlerts.length > 0 ? (
+              <ul className="divide-y divide-[#F0F1F3] mt-1">
+                {m.conditionAlerts.map((a) => (
+                  <li key={a.id} className="py-3">
+                    <div className="flex items-start gap-2.5">
+                      <AlertTriangle className="size-4 text-red-500 shrink-0 mt-0.5" />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-mono text-xs font-semibold text-[#1D2939]">
+                            {a.batchCode}
+                          </span>
+                          <span className="text-[11px] text-[#858D9D]">
+                            {formatDateTime(a.createdAt).split(",")[0]}
+                          </span>
+                        </div>
+                        <p className="mt-0.5 text-xs text-[#5D6679] line-clamp-2">
+                          {a.reason.replace(/["\[\]]/g, "")}
+                        </p>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="py-12 text-center text-xs text-[#858D9D]">
+                <CheckCircle2 className="size-8 text-[#10B981] mx-auto mb-2 opacity-80" />
+                Tidak ada anomali atau pelanggaran parameter kondisi yang tercatat.
+              </div>
+            )}
           </div>
-        </section>
-      </div>
-    </div>
+        </MotionCard>
+      </StaggerItem>
+    </StaggerContainer>
   );
 }

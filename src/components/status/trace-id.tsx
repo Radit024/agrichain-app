@@ -43,12 +43,12 @@ export function TraceId({
         type="button"
         onClick={copy}
         aria-label={copied ? "Tersalin" : `Salin ${label ?? "ID"}`}
-        className="inline-flex size-6 shrink-0 items-center justify-center rounded-md text-ink-muted transition-colors hover:bg-surface-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
+        className="inline-flex size-6 shrink-0 items-center justify-center rounded-md text-ink-muted transition-all duration-150 active:scale-90 hover:bg-surface-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
       >
         {copied ? (
-          <Check aria-hidden className="size-3 text-compliant" />
+          <Check aria-hidden className="size-3 text-compliant animate-in zoom-in-50 duration-150" />
         ) : (
-          <Copy aria-hidden className="size-3" />
+          <Copy aria-hidden className="size-3 transition-transform duration-150 hover:scale-110" />
         )}
       </button>
     </span>

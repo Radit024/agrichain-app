@@ -20,11 +20,14 @@ const ibmPlexMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Agrichain — Ketertelusuran Distribusi Pangan",
-    template: "%s · Agrichain",
+    default: "Agrilink — Ketertelusuran Distribusi Pangan",
+    template: "%s · Agrilink",
   },
   description:
     "Purwarupa ketertelusuran batch distribusi pangan: serah-terima, evaluasi kondisi tercatat, verifikasi akses digital, dan audit on-chain.",
+  icons: {
+    icon: "/logo.svg",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

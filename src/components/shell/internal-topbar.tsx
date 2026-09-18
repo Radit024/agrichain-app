@@ -5,11 +5,10 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Home,
-  ShoppingCart,
+  Boxes,
+  Truck,
+  MapPin,
   BarChart3,
-  UserCircle2,
-  Package,
-  Store,
   Settings,
   Bell,
   Search,
@@ -23,21 +22,13 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { HexagonBrandLogo, BrandWordmark } from "@/components/brand/brand-logo";
 
-/**
- * Topbar presisi persis foto referensi 02-dashboard.png:
- * - Search bar rounded dengan placeholder "Search product, supplier, order"
- * - Bell notification button
- * - User avatar circle
- * - Responsive mobile drawer
- */
-
 const navItems = [
   { href: "/mainapp/dashboard", label: "Dashboard", icon: Home },
-  { href: "/mainapp/batch", label: "Inventory", icon: ShoppingCart },
-  { href: "/mainapp/laporan", label: "Reports", icon: BarChart3 },
-  { href: "/mainapp/titik-distribusi", label: "Suppliers", icon: UserCircle2 },
-  { href: "/mainapp/serah-terima", label: "Orders", icon: Package },
-  { href: "/mainapp/pengaturan", label: "Manage Store", icon: Store },
+  { href: "/mainapp/batch", label: "Batch", icon: Boxes },
+  { href: "/mainapp/serah-terima", label: "Serah-terima", icon: Truck },
+  { href: "/mainapp/titik-distribusi", label: "Titik Distribusi", icon: MapPin },
+  { href: "/mainapp/laporan", label: "Laporan", icon: BarChart3 },
+  { href: "/mainapp/pengaturan", label: "Pengaturan", icon: Settings },
 ] as const;
 
 export function InternalTopbar() {
@@ -53,7 +44,7 @@ export function InternalTopbar() {
       // Abaikan jika privy logout gagal atau tidak terotentikasi
     }
     await fetch("/api/auth/session", { method: "DELETE" });
-    window.location.href = "/masuk?logout=1";
+    router.push("/masuk?logout=1");
   }
 
   return (
@@ -73,18 +64,18 @@ export function InternalTopbar() {
           </Button>
           <div className="flex items-center gap-2">
             <HexagonBrandLogo className="size-6 shrink-0" />
-            <span className="font-bold text-base text-[#1570EF]">AGRICHAIN</span>
+            <span className="font-bold text-base text-[#1570EF]">AGRILINK</span>
           </div>
         </div>
 
-        {/* Kotak Pencarian Persis Referensi: Search product, supplier, order */}
+        {/* Kotak Pencarian Domain Ketertelusuran */}
         <form
           action="/mainapp/batch"
           className="relative hidden w-full max-w-[420px] md:block"
           role="search"
         >
           <label htmlFor="topbar-search" className="sr-only">
-            Search product, supplier, order
+            Cari batch, komoditas, titik distribusi
           </label>
           <div className="relative flex items-center">
             <Search
@@ -95,7 +86,7 @@ export function InternalTopbar() {
               id="topbar-search"
               name="q"
               type="search"
-              placeholder="Search product, supplier, order"
+              placeholder="Cari batch, komoditas, titik distribusi..."
               className="h-10 w-full rounded-lg border border-[#D0D5DD] bg-white pl-10 pr-3.5 text-sm text-[#1D2939] placeholder-[#858D9D] transition-colors focus:border-[#1570EF] focus:outline-none focus:ring-1 focus:ring-[#1570EF]"
             />
           </div>
@@ -185,7 +176,7 @@ export function InternalTopbar() {
                 className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-[#EF4444] hover:bg-[#FEE2E2]/40 transition-colors"
               >
                 <LogOut className="size-4" />
-                <span>Log Out</span>
+                <span>Keluar</span>
               </button>
             </div>
           </div>

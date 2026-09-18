@@ -1,14 +1,13 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { cookies } from "next/headers";
-import { Calendar, ChevronDown } from "lucide-react";
+import { ShieldCheck, CheckCircle2, AlertTriangle, Link2, Activity, Layers } from "lucide-react";
 import { APP_SESSION_COOKIE, readAppSession } from "@/server/auth/app-session";
 import { getDbAdapter } from "@/server/db/adapter";
 import { getReportMetrics } from "@/server/queries/internal";
 import { formatDateTime } from "@/components/shared/handoff-timeline";
-import { OrderSummaryCurveChart } from "@/components/shared/trend-charts";
+import { ConditionTrendChart } from "@/components/shared/trend-charts";
 
-export const metadata: Metadata = { title: "Reports" };
+export const metadata: Metadata = { title: "Laporan Ketertelusuran" };
 export const dynamic = "force-dynamic";
 
 export default async function ReportsPage() {
@@ -17,178 +16,255 @@ export default async function ReportsPage() {
   const db = await getDbAdapter();
   const m = await getReportMetrics(db, session);
 
+  const totalVerifications = m.verificationOutcomes.reduce((acc, curr) => acc + curr.count, 0);
+  const sahCount = m.verificationOutcomes.find((o) => o.outcome === "SAH")?.count ?? 0;
+  const tidakSahCount = m.verificationOutcomes.find((o) => o.outcome === "TIDAK_SAH")?.count ?? 0;
+  const anomaliCount = m.verificationOutcomes.find((o) => o.outcome === "ANOMALI")?.count ?? 0;
+
   return (
     <div className="space-y-6 pb-12">
-      {/* Row 1: Overview (Kiri) + Best selling category (Kanan) */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        {/* Overview Card */}
-        <section className="rounded-xl border border-[#F0F1F3] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] lg:col-span-8">
-          <h2 className="text-base font-semibold text-[#1D2939]">Overview</h2>
-
-          {/* Top 3 Metrics */}
-          <div className="mt-5 grid grid-cols-3 gap-4 border-b border-[#F0F1F3] pb-5">
-            <div>
-              <p className="font-bold text-base text-[#1D2939] tnum">Rp 21.190</p>
-              <p className="mt-0.5 text-xs text-[#858D9D]">Total Profit</p>
-            </div>
-            <div>
-              <p className="font-bold text-base text-[#F97316] tnum">Rp 18.300</p>
-              <p className="mt-0.5 text-xs text-[#858D9D]">Revenue</p>
-            </div>
-            <div>
-              <p className="font-bold text-base text-[#845EC2] tnum">Rp 17.432</p>
-              <p className="mt-0.5 text-xs text-[#858D9D]">Sales</p>
-            </div>
-          </div>
-
-          {/* Bottom 4 Metrics */}
-          <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <div>
-              <p className="font-bold text-sm text-[#1D2939] tnum">Rp 117.432</p>
-              <p className="mt-0.5 text-[11px] text-[#858D9D]">Net purchase value</p>
-            </div>
-            <div>
-              <p className="font-bold text-sm text-[#1D2939] tnum">Rp 80.432</p>
-              <p className="mt-0.5 text-[11px] text-[#858D9D]">Net sales value</p>
-            </div>
-            <div>
-              <p className="font-bold text-sm text-[#1D2939] tnum">Rp 30.432</p>
-              <p className="mt-0.5 text-[11px] text-[#858D9D]">MoM Profit</p>
-            </div>
-            <div>
-              <p className="font-bold text-sm text-[#1D2939] tnum">Rp 110.432</p>
-              <p className="mt-0.5 text-[11px] text-[#858D9D]">YoY Profit</p>
-            </div>
-          </div>
-        </section>
-
-        {/* Best selling category Card */}
-        <section className="rounded-xl border border-[#F0F1F3] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] lg:col-span-4 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between border-b border-[#F0F1F3] pb-3">
-              <h2 className="text-base font-semibold text-[#1D2939]">Best selling category</h2>
-              <Link
-                href="/mainapp/batch"
-                className="text-xs font-semibold text-[#1570EF] hover:underline"
-              >
-                See All
-              </Link>
-            </div>
-
-            <table className="w-full text-left text-xs mt-2">
-              <thead className="text-[#858D9D] font-normal border-b border-[#F0F1F3]">
-                <tr>
-                  <th className="py-2.5 font-normal">Category</th>
-                  <th className="py-2.5 px-3 font-normal">Turn Over</th>
-                  <th className="py-2.5 text-right font-normal">Increase By</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#F0F1F3] text-[#1D2939]">
-                <tr>
-                  <td className="py-3 font-medium">Vegetable</td>
-                  <td className="py-3 px-3 text-[#5D6679]">Rp 26.000</td>
-                  <td className="py-3 text-right font-semibold text-[#10B981]">3.2%</td>
-                </tr>
-                <tr>
-                  <td className="py-3 font-medium">Instant Food</td>
-                  <td className="py-3 px-3 text-[#5D6679]">Rp 22.000</td>
-                  <td className="py-3 text-right font-semibold text-[#10B981]">2%</td>
-                </tr>
-                <tr>
-                  <td className="py-3 font-medium">Households</td>
-                  <td className="py-3 px-3 text-[#5D6679]">Rp 22.000</td>
-                  <td className="py-3 text-right font-semibold text-[#10B981]">1.5%</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
+      {/* Header Info */}
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-[#1D2939]">Laporan Ketertelusuran & Audit</h1>
+          <p className="text-xs text-[#858D9D]">
+            Rekapitulasi kepatuhan kondisi, verifikasi otorisasi akses, dan integritas ledger
+            blockchain.
+          </p>
+        </div>
       </div>
 
-      {/* Row 2: Profit & Revenue (Full width chart persis 04-reports.png) */}
+      {/* Row 1: KPI Summary Cards */}
       <section className="rounded-xl border border-[#F0F1F3] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold text-[#1D2939]">Profit & Revenue</h2>
-          <button
-            type="button"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-[#D0D5DD] bg-white px-3 py-1.5 text-xs font-medium text-[#5D6679] hover:bg-gray-50 shadow-2xs"
-          >
-            <Calendar className="size-3.5 text-[#858D9D]" />
-            <span>Weekly</span>
-            <ChevronDown className="size-3.5 text-[#858D9D]" />
-          </button>
-        </div>
+        <h2 className="text-base font-semibold text-[#1D2939]">Indikator Kinerja Kepatuhan</h2>
 
-        <div className="mt-4">
-          <OrderSummaryCurveChart height={280} />
-          <div className="mt-3 flex items-center justify-center gap-6 text-xs text-[#5D6679]">
-            <span className="flex items-center gap-2">
-              <span className="size-2.5 rounded-full bg-[#1570EF]" /> Revenue
-            </span>
-            <span className="flex items-center gap-2">
-              <span className="size-2.5 rounded-full bg-[#F59E0B]" /> Profit
-            </span>
+        <div className="mt-4 grid grid-cols-2 gap-4 divide-y divide-[#F0F1F3] sm:grid-cols-4 sm:divide-y-0 sm:divide-x">
+          <div className="py-2 sm:px-4 first:pl-0">
+            <h3 className="text-sm font-semibold text-[#1570EF]">Batch Terpantau</h3>
+            <p className="mt-2.5 font-bold text-xl text-[#1D2939] tnum">{m.monitoredBatches}</p>
+            <p className="mt-0.5 text-xs text-[#858D9D]">Di bawah monitoring</p>
+          </div>
+
+          <div className="py-2 sm:px-4">
+            <h3 className="text-sm font-semibold text-[#10B981]">Compliance Rate</h3>
+            <p className="mt-2.5 font-bold text-xl text-[#10B981] tnum">{m.complianceRate}%</p>
+            <p className="mt-0.5 text-xs text-[#858D9D]">Sesuai batas toleransi</p>
+          </div>
+
+          <div className="py-2 sm:px-4">
+            <h3 className="text-sm font-semibold text-[#845EC2]">Total Verifikasi</h3>
+            <p className="mt-2.5 font-bold text-xl text-[#1D2939] tnum">{totalVerifications}</p>
+            <p className="mt-0.5 text-xs text-[#858D9D]">14 hari terakhir</p>
+          </div>
+
+          <div className="py-2 sm:px-4 last:pr-0">
+            <h3 className="text-sm font-semibold text-[#F97316]">Event Blockchain</h3>
+            <p className="mt-2.5 font-bold text-xl text-[#1D2939] tnum">{m.evidence.length}</p>
+            <p className="mt-0.5 text-xs text-[#858D9D]">Bukti audit immutable</p>
           </div>
         </div>
       </section>
 
-      {/* Row 3: Best selling product (Persis 04-reports.png) */}
+      {/* Row 2: Distribusi Verifikasi (Kiri) + Kualitas Data (Kanan) */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        {/* Distribusi Verifikasi Akses */}
+        <section className="rounded-xl border border-[#F0F1F3] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] lg:col-span-6">
+          <h2 className="text-base font-semibold text-[#1D2939]">Hasil Verifikasi Akses Petugas</h2>
+          <p className="text-xs text-[#858D9D] mt-0.5">
+            Evaluasi tripartit: kode otorisasi, jadwal titik, dan status batch.
+          </p>
+
+          <div className="mt-4 space-y-3">
+            <div className="flex items-center justify-between rounded-lg bg-[#F0FDF4] p-3 text-xs">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="size-4 text-[#10B981]" />
+                <div>
+                  <span className="font-semibold text-[#15803D]">SAH</span>
+                  <p className="text-[11px] text-[#166534]">
+                    Kode cocok, dalam jadwal, lokasi valid
+                  </p>
+                </div>
+              </div>
+              <span className="font-bold text-sm text-[#15803D] tnum">{sahCount}</span>
+            </div>
+
+            <div className="flex items-center justify-between rounded-lg bg-[#FFFBEB] p-3 text-xs">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="size-4 text-[#D97706]" />
+                <div>
+                  <span className="font-semibold text-[#B45309]">TIDAK SAH</span>
+                  <p className="text-[11px] text-[#92400E]">
+                    Kode salah atau otorisasi kedaluwarsa
+                  </p>
+                </div>
+              </div>
+              <span className="font-bold text-sm text-[#B45309] tnum">{tidakSahCount}</span>
+            </div>
+
+            <div className="flex items-center justify-between rounded-lg bg-[#FEF2F2] p-3 text-xs">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="size-4 text-[#DC2626]" />
+                <div>
+                  <span className="font-semibold text-[#B91C1C]">ANOMALI</span>
+                  <p className="text-[11px] text-[#991B1B]">
+                    Di luar jadwal atau lokasi tidak sesuai
+                  </p>
+                </div>
+              </div>
+              <span className="font-bold text-sm text-[#B91C1C] tnum">{anomaliCount}</span>
+            </div>
+          </div>
+        </section>
+
+        {/* Karakteristik Integritas & Kepatuhan */}
+        <section className="rounded-xl border border-[#F0F1F3] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] lg:col-span-6 flex flex-col justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-[#1D2939]">Jaminan Integritas Sistem</h2>
+            <p className="text-xs text-[#858D9D] mt-0.5">
+              Standar arsitektur ketertelusuran yang diterapkan pada sistem ini.
+            </p>
+
+            <div className="mt-4 space-y-2.5 text-xs text-[#344054]">
+              <div className="flex items-start gap-2.5 rounded-lg border border-[#F0F1F3] p-2.5">
+                <Layers className="size-4 text-[#1570EF] shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-semibold text-[#1D2939]">Separasi Dua Dimensi</span>
+                  <p className="text-[#5D6679]">
+                    Status kondisi (<code className="text-[#1570EF]">COMPLIANT / AT_RISK</code>)
+                    dipisahkan tegas dari kualitas data sensor (
+                    <code className="text-[#1570EF]">AVAILABLE / DATA_UNAVAILABLE</code>).
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-2.5 rounded-lg border border-[#F0F1F3] p-2.5">
+                <Link2 className="size-4 text-[#10B981] shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-semibold text-[#1D2939]">
+                    Rekonsiliasi Submitter On-Chain
+                  </span>
+                  <p className="text-[#5D6679]">
+                    Event kritis antrean off-chain diverifikasi dan dicatat ke smart contract
+                    AgrichainLedger dengan jaminan idempotensi.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-2.5 rounded-lg border border-[#F0F1F3] p-2.5">
+                <Activity className="size-4 text-[#845EC2] shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-semibold text-[#1D2939]">Anti-Enumeration Guard</span>
+                  <p className="text-[#5D6679]">
+                    Verifikasi kode otorisasi di-hash dengan Argon2id; respon gagal diseragamkan
+                    untuk memitigasi serangan enumeration.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      {/* Row 3: Tren Kepatuhan Kondisi Harian */}
+      <section className="rounded-xl border border-[#F0F1F3] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-[#1D2939]">
+              Tren Kepatuhan Kondisi Batch (14 Hari)
+            </h2>
+            <p className="text-xs text-[#858D9D]">
+              Fluktuasi batch dalam batas toleransi (
+              <span className="text-[#10B981]">Compliant</span>) versus di luar batas (
+              <span className="text-[#F43F5E]">AT_RISK</span>). Sumber: SIMULATOR.
+            </p>
+          </div>
+          <div className="flex items-center gap-4 text-xs text-[#5D6679]">
+            <span className="flex items-center gap-1.5">
+              <span className="size-2.5 rounded-full bg-[#10B981]" /> Compliant
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="size-2.5 rounded-full bg-[#F43F5E]" /> AT Risk
+            </span>
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <ConditionTrendChart data={m.trend} height={260} />
+        </div>
+      </section>
+
+      {/* Row 4: Log Bukti Transaksi Blockchain */}
       <section className="rounded-xl border border-[#F0F1F3] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
         <div className="flex items-center justify-between border-b border-[#F0F1F3] pb-4">
-          <h2 className="text-base font-semibold text-[#1D2939]">Best selling product</h2>
-          <Link
-            href="/mainapp/batch"
-            className="text-xs font-semibold text-[#1570EF] hover:underline"
-          >
-            See All
-          </Link>
+          <div>
+            <h2 className="text-base font-semibold text-[#1D2939]">
+              Bukti Transaksi Blockchain (Ledger Evidence)
+            </h2>
+            <p className="text-xs text-[#858D9D]">
+              Daftar referensi transaksi terdesentralisasi yang mencatat integritas data batch dan
+              peristiwa penting.
+            </p>
+          </div>
+          <span className="rounded-full bg-[#EFF8FF] px-2.5 py-0.5 text-xs font-semibold text-[#1570EF]">
+            {m.evidence.length} Record
+          </span>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-[#F0F1F3] text-xs font-medium text-[#858D9D]">
               <tr>
-                <th className="py-3.5 pr-4 font-normal">Product</th>
-                <th className="py-3.5 px-4 font-normal">Product ID</th>
-                <th className="py-3.5 px-4 font-normal">Category</th>
-                <th className="py-3.5 px-4 font-normal">Remaining Quantity</th>
-                <th className="py-3.5 px-4 font-normal">Turn Over</th>
-                <th className="py-3.5 pl-4 text-right font-normal">Increase By</th>
+                <th className="py-3 pr-4 font-normal">Batch</th>
+                <th className="py-3 px-4 font-normal">Tipe Peristiwa</th>
+                <th className="py-3 px-4 font-normal">Waktu Terjadi</th>
+                <th className="py-3 px-4 font-normal">Status Sinkronisasi</th>
+                <th className="py-3 pl-4 text-right font-normal">Tx Hash (Blockchain)</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#F0F1F3] text-[#1D2939]">
-              <tr className="hover:bg-[#F9FAFB]">
-                <td className="py-3.5 pr-4 font-medium">Tomato</td>
-                <td className="py-3.5 px-4 text-[#5D6679] tnum">23567</td>
-                <td className="py-3.5 px-4 text-[#5D6679]">Vegetable</td>
-                <td className="py-3.5 px-4 text-[#5D6679] tnum">225 kg</td>
-                <td className="py-3.5 px-4 text-[#5D6679] tnum">Rp 17.000</td>
-                <td className="py-3.5 pl-4 text-right font-semibold text-[#10B981]">2.3%</td>
-              </tr>
-              <tr className="hover:bg-[#F9FAFB]">
-                <td className="py-3.5 pr-4 font-medium">Onion</td>
-                <td className="py-3.5 px-4 text-[#5D6679] tnum">25831</td>
-                <td className="py-3.5 px-4 text-[#5D6679]">Vegetable</td>
-                <td className="py-3.5 px-4 text-[#5D6679] tnum">200 kg</td>
-                <td className="py-3.5 px-4 text-[#5D6679] tnum">Rp 12.000</td>
-                <td className="py-3.5 pl-4 text-right font-semibold text-[#10B981]">1.3%</td>
-              </tr>
-              <tr className="hover:bg-[#F9FAFB]">
-                <td className="py-3.5 pr-4 font-medium">Maggi</td>
-                <td className="py-3.5 px-4 text-[#5D6679] tnum">56841</td>
-                <td className="py-3.5 px-4 text-[#5D6679]">Instant Food</td>
-                <td className="py-3.5 px-4 text-[#5D6679] tnum">200 Packet</td>
-                <td className="py-3.5 px-4 text-[#5D6679] tnum">Rp 10.000</td>
-                <td className="py-3.5 pl-4 text-right font-semibold text-[#10B981]">1.3%</td>
-              </tr>
-              <tr className="hover:bg-[#F9FAFB]">
-                <td className="py-3.5 pr-4 font-medium">Surf Excel</td>
-                <td className="py-3.5 px-4 text-[#5D6679] tnum">23567</td>
-                <td className="py-3.5 px-4 text-[#5D6679]">Household</td>
-                <td className="py-3.5 px-4 text-[#5D6679] tnum">125 Packet</td>
-                <td className="py-3.5 px-4 text-[#5D6679] tnum">Rp 9.000</td>
-                <td className="py-3.5 pl-4 text-right font-semibold text-[#10B981]">1%</td>
-              </tr>
+              {m.evidence.length > 0 ? (
+                m.evidence.map((ev) => (
+                  <tr key={ev.id} className="hover:bg-[#F9FAFB]">
+                    <td className="py-3.5 pr-4 font-mono font-medium text-xs">
+                      {ev.batchCode || "–"}
+                    </td>
+                    <td className="py-3.5 px-4 text-xs">
+                      <span className="font-semibold text-[#344054]">{ev.eventType}</span>
+                    </td>
+                    <td className="py-3.5 px-4 text-xs text-[#5D6679] tnum">
+                      {formatDateTime(ev.eventTime)}
+                    </td>
+                    <td className="py-3.5 px-4 text-xs">
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                          ev.syncStatus === "SYNCED"
+                            ? "bg-[#ECFDF3] text-[#027A48]"
+                            : ev.syncStatus === "PENDING"
+                              ? "bg-[#EFF8FF] text-[#175CD3]"
+                              : "bg-[#FEF3F2] text-[#B42318]"
+                        }`}
+                      >
+                        {ev.syncStatus}
+                      </span>
+                    </td>
+                    <td className="py-3.5 pl-4 text-right font-mono text-xs text-[#5D6679]">
+                      {ev.txHash ? (
+                        <span className="text-[#1570EF]" title={ev.txHash}>
+                          {ev.txHash.slice(0, 10)}...{ev.txHash.slice(-8)}
+                        </span>
+                      ) : (
+                        <span className="text-[#858D9D] italic">Antrean Submitter</span>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={5} className="py-8 text-center text-xs text-[#858D9D]">
+                    Belum ada transaksi blockchain yang tercatat untuk organisasi ini.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

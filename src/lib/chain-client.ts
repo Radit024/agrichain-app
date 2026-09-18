@@ -24,6 +24,6 @@ export async function submitPreparedChainCall(
       txHash: transaction.hash,
     }),
   });
-  if (!response.ok) throw new Error("Transaksi tidak dapat diverifikasi oleh Agrichain.");
+  if (!response.ok) throw new Error("Transaksi tidak dapat diverifikasi oleh Agrilink.");
   return transaction.hash;
 }
