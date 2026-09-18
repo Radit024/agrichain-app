@@ -123,12 +123,14 @@ test.describe("Anti-UI-Slop: Halaman Internal Terautentikasi", () => {
     // Summary cards domain
     await expect(page.getByText("Ringkasan Batch")).toBeVisible();
     await expect(page.getByText("Total Batch")).toBeVisible();
-    await expect(page.getByText("Compliant")).toBeVisible();
-    await expect(page.getByText("Dalam Distribusi")).toBeVisible();
+    await expect(page.getByText("Compliant").first()).toBeVisible();
+    await expect(page.getByText("Dalam Distribusi").first()).toBeVisible();
 
     // Header tabel
     await expect(page.getByText("Kode Batch")).toBeVisible();
-    await expect(page.getByText("Kategori / Mode")).toBeVisible();
+    if ((page.viewportSize()?.width ?? 1024) >= 640) {
+      await expect(page.getByText("Kategori / Mode")).toBeVisible();
+    }
     await expect(page.getByText("Status Distribusi")).toBeVisible();
 
     // Bebas slop

@@ -89,7 +89,7 @@ export async function getDashboardMetrics(
      from (
        select b.*,
          (select i.id from handoff_intents i where i.batch_id = b.id and i.status = 'PENDING' limit 1) as pending_intent
-       from batches b where b.org_id = any($1::uuid[])
+       from batches b where (b.org_id = any($1::uuid[]) or b.custodian_org_id = any($1::uuid[]))
      ) t`,
     [orgIds],
   );
@@ -106,7 +106,7 @@ export async function getDashboardMetrics(
        count(*) filter (where result = 'ANOMALI')::int as anomali
      from access_attempts a
      join batches b on b.id = a.batch_id
-     where b.org_id = any($1::uuid[]) and a.attempted_at >= now() - interval '7 days'`,
+     where (b.org_id = any($1::uuid[]) or b.custodian_org_id = any($1::uuid[])) and a.attempted_at >= now() - interval '7 days'`,
     [orgIds],
   );
   const at = attempts[0];
@@ -125,7 +125,7 @@ export async function getDashboardMetrics(
             coalesce(c.name, '') as product_name
      from batches b
      left join product_categories c on c.id = b.category_id
-     where b.org_id = any($1::uuid[])
+     where (b.org_id = any($1::uuid[]) or b.custodian_org_id = any($1::uuid[]))
        and (b.condition_status = 'AT_RISK'
             or b.data_quality_status = 'DATA_UNAVAILABLE'
             or exists (select 1 from handoff_intents i where i.batch_id = b.id and i.status = 'PENDING'))
@@ -143,7 +143,7 @@ export async function getDashboardMetrics(
     `select e.id, b.batch_code, e.reasons::text as reason, e.created_at
      from condition_evaluations e
      join batches b on b.id = e.batch_id
-     where b.org_id = any($1::uuid[])
+     where (b.org_id = any($1::uuid[]) or b.custodian_org_id = any($1::uuid[]))
        and (e.reasons::text like '%AT_RISK%' or e.reasons::text like '%DATA_UNAVAILABLE%')
      order by e.created_at desc
      limit 6`,
@@ -161,7 +161,7 @@ export async function getDashboardMetrics(
      from generate_series(current_date - interval '13 days', current_date, interval '1 day') as d(day)
      left join condition_evaluations e
        on date_trunc('day', e.created_at) = d.day
-       and e.batch_id in (select id from batches where org_id = any($1::uuid[]))
+       and e.batch_id in (select id from batches where org_id = any($1::uuid[]) or custodian_org_id = any($1::uuid[]))
      group by d.day order by d.day`,
     [orgIds],
   );
@@ -177,7 +177,7 @@ export async function getDashboardMetrics(
      from generate_series(current_date - interval '13 days', current_date, interval '1 day') as d(day)
      left join handoff_intents i
        on date_trunc('day', i.initiated_at) = d.day
-       and i.batch_id in (select id from batches where org_id = any($1::uuid[]))
+       and i.batch_id in (select id from batches where org_id = any($1::uuid[]) or custodian_org_id = any($1::uuid[]))
      group by d.day order by d.day`,
     [orgIds],
   );
@@ -291,7 +291,7 @@ export async function listBatches(
                  order by ac.valid_until desc limit 1)
                where r.batch_id = b.id order by r.confirmed_at desc limit 1) as last_point
      from batches b join product_categories c on c.id = b.category_id
-     where b.org_id = any($1::uuid[])
+     where (b.org_id = any($1::uuid[]) or b.custodian_org_id = any($1::uuid[]))
        and ($2::handling_mode is null or c.handling_mode = $2::handling_mode)
        and ($3::text is null or b.distribution_status = $3::text)
        and ($4::text is null or b.condition_status = $4::text)
@@ -415,6 +415,7 @@ export async function getBatchDetail(
     batch_code: string;
     public_id: string;
     org_id: string;
+    custodian_org_id: string | null;
     category_name: string;
     handling_mode: string;
     distribution_status: string;
@@ -427,7 +428,7 @@ export async function getBatchDetail(
     profile_snapshot: BatchDetail["profileSnapshot"];
     chain_sync_status: string;
   }>(
-    `select b.id, b.batch_code, b.public_id, b.org_id, c.name as category_name,
+    `select b.id, b.batch_code, b.public_id, b.org_id, b.custodian_org_id, c.name as category_name,
             c.handling_mode, b.distribution_status, b.condition_status,
             b.data_quality_status, b.custody_stage, b.paused, b.created_at,
             b.updated_at, b.profile_snapshot, b.chain_sync_status
@@ -437,8 +438,13 @@ export async function getBatchDetail(
   );
   const b = rows[0];
   if (!b) return null;
-  // IDOR: batch harus milik org membership user
-  if (!session.memberships.some((m) => m.orgId === b.org_id)) return null;
+  // IDOR guard: batch harus milik org pencipta atau org kustodian saat ini
+  if (
+    !session.memberships.some(
+      (m) => m.orgId === b.org_id || (b.custodian_org_id && m.orgId === b.custodian_org_id),
+    )
+  )
+    return null;
 
   const evalRows = await db.query<{
     id: string;
@@ -859,7 +865,7 @@ export async function getReportMetrics(
   const totals = await db.query<{ monitored: number; compliant: number }>(
     `select count(*)::int as monitored,
        count(*) filter (where condition_status = 'COMPLIANT')::int as compliant
-     from batches where org_id = any($1::uuid[])`,
+     from batches where org_id = any($1::uuid[]) or custodian_org_id = any($1::uuid[])`,
     [orgIds],
   );
   const t = totals[0];
@@ -867,7 +873,7 @@ export async function getReportMetrics(
   const outcomes = await db.query<{ outcome: string; count: number }>(
     `select result as outcome, count(*)::int as count
      from access_attempts a join batches b on b.id = a.batch_id
-     where b.org_id = any($1::uuid[])
+     where (b.org_id = any($1::uuid[]) or b.custodian_org_id = any($1::uuid[]))
        and a.attempted_at >= now() - ($2::int * interval '1 day')
      group by result order by count desc`,
     [orgIds, days],
@@ -880,7 +886,7 @@ export async function getReportMetrics(
      from generate_series(current_date - (($2::int - 1) * interval '1 day'), current_date, interval '1 day') as d(day)
      left join condition_evaluations e
        on date_trunc('day', e.created_at) = d.day
-       and e.batch_id in (select id from batches where org_id = any($1::uuid[]))
+       and e.batch_id in (select id from batches where org_id = any($1::uuid[]) or custodian_org_id = any($1::uuid[]))
      group by d.day order by d.day`,
     [orgIds, days],
   );
@@ -896,7 +902,7 @@ export async function getReportMetrics(
     `select r.id, b.batch_code, r.event_type, r.created_at, r.chain_tx_hash, r.chain_sync_status
      from transaction_references r
      left join batches b on b.id = r.batch_id
-     where r.batch_id in (select id from batches where org_id = any($1::uuid[]))
+     where r.batch_id in (select id from batches where org_id = any($1::uuid[]) or custodian_org_id = any($1::uuid[]))
      order by r.created_at desc limit 50`,
     [orgIds],
   );
@@ -954,8 +960,10 @@ export async function listCategoryProfiles(
     name: string;
     handling_mode: string;
   }>(
-    `select id, name, handling_mode from product_categories
-     where org_id = any($1::uuid[]) order by name`,
+    `select distinct c.id, c.name, c.handling_mode from product_categories c
+     where c.org_id = any($1::uuid[])
+        or exists (select 1 from batches b where b.category_id = c.id and (b.org_id = any($1::uuid[]) or b.custodian_org_id = any($1::uuid[])))
+     order by c.name`,
     [orgIds],
   );
 
@@ -968,7 +976,9 @@ export async function listCategoryProfiles(
   }>(
     `select p.id, p.category_id, p.version, p.is_locked, p.stale_after_seconds
      from monitoring_profiles p join product_categories c on c.id = p.category_id
-     where c.org_id = any($1::uuid[]) order by c.name, p.version desc`,
+     where c.org_id = any($1::uuid[])
+        or exists (select 1 from batches b where b.category_id = c.id and (b.org_id = any($1::uuid[]) or b.custodian_org_id = any($1::uuid[])))
+     order by c.name, p.version desc`,
     [orgIds],
   );
 
@@ -988,7 +998,8 @@ export async function listCategoryProfiles(
      join monitoring_parameter_definitions d on d.code = r.parameter_code
      join monitoring_profiles p on p.id = r.profile_id
      join product_categories c on c.id = p.category_id
-     where c.org_id = any($1::uuid[])`,
+     where c.org_id = any($1::uuid[])
+        or exists (select 1 from batches b where b.category_id = c.id and (b.org_id = any($1::uuid[]) or b.custodian_org_id = any($1::uuid[])))`,
     [orgIds],
   );
 

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import { ShieldCheck, CheckCircle2, AlertTriangle, Link2, Activity, Layers } from "lucide-react";
+import { ShieldAlert, CheckCircle2, AlertTriangle, Link2, Lock, Layers } from "lucide-react";
 import { APP_SESSION_COOKIE, readAppSession } from "@/server/auth/app-session";
 import { getDbAdapter } from "@/server/db/adapter";
 import { getReportMetrics } from "@/server/queries/internal";
@@ -42,26 +42,26 @@ export default async function ReportsPage() {
         <MotionCard className="rounded-xl border border-[#F0F1F3] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] transition-all duration-200 hover:border-[#E4E7EC] hover:shadow-[0_4px_12px_rgba(0,0,0,0.04)]">
           <h2 className="text-base font-semibold text-[#1D2939]">Indikator Kinerja Kepatuhan</h2>
 
-          <div className="mt-4 grid grid-cols-2 gap-4 divide-y divide-[#F0F1F3] sm:grid-cols-4 sm:divide-y-0 sm:divide-x">
-            <div className="py-2 sm:px-4 first:pl-0">
+          <div className="mt-4 grid grid-cols-2 gap-px bg-[#F0F1F3] rounded-lg overflow-hidden sm:grid-cols-4">
+            <div className="bg-white py-4 px-4">
               <h3 className="text-sm font-semibold text-[#1570EF]">Batch Terpantau</h3>
               <p className="mt-2.5 font-bold text-xl text-[#1D2939] tnum">{m.monitoredBatches}</p>
               <p className="mt-0.5 text-xs text-[#858D9D]">Di bawah monitoring</p>
             </div>
 
-            <div className="py-2 sm:px-4">
+            <div className="bg-white py-4 px-4">
               <h3 className="text-sm font-semibold text-[#10B981]">Compliance Rate</h3>
               <p className="mt-2.5 font-bold text-xl text-[#10B981] tnum">{m.complianceRate}%</p>
               <p className="mt-0.5 text-xs text-[#858D9D]">Sesuai batas toleransi</p>
             </div>
 
-            <div className="py-2 sm:px-4">
+            <div className="bg-white py-4 px-4">
               <h3 className="text-sm font-semibold text-[#845EC2]">Total Verifikasi</h3>
               <p className="mt-2.5 font-bold text-xl text-[#1D2939] tnum">{totalVerifications}</p>
               <p className="mt-0.5 text-xs text-[#858D9D]">14 hari terakhir</p>
             </div>
 
-            <div className="py-2 sm:px-4 last:pr-0">
+            <div className="bg-white py-4 px-4">
               <h3 className="text-sm font-semibold text-[#F97316]">Event Blockchain</h3>
               <p className="mt-2.5 font-bold text-xl text-[#1D2939] tnum">{m.evidence.length}</p>
               <p className="mt-0.5 text-xs text-[#858D9D]">Bukti audit immutable</p>
@@ -111,7 +111,7 @@ export default async function ReportsPage() {
 
               <div className="flex items-center justify-between rounded-lg bg-[#FEF2F2] p-3 text-xs">
                 <div className="flex items-center gap-2">
-                  <ShieldCheck className="size-4 text-[#DC2626]" />
+                  <ShieldAlert className="size-4 text-[#DC2626]" />
                   <div>
                     <span className="font-semibold text-[#B91C1C]">ANOMALI</span>
                     <p className="text-[11px] text-[#991B1B]">
@@ -159,7 +159,7 @@ export default async function ReportsPage() {
                 </div>
 
                 <div className="flex items-start gap-2.5 rounded-lg border border-[#F0F1F3] p-2.5">
-                  <Activity className="size-4 text-[#845EC2] shrink-0 mt-0.5" />
+                  <Lock className="size-4 text-[#845EC2] shrink-0 mt-0.5" />
                   <div>
                     <span className="font-semibold text-[#1D2939]">Anti-Enumeration Guard</span>
                     <p className="text-[#5D6679]">

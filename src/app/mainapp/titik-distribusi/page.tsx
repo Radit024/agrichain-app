@@ -7,6 +7,7 @@ import { listDistributionPoints, listBatches } from "@/server/queries/internal";
 import { AddDistributionPointDialog } from "@/components/distribution/add-distribution-point-dialog";
 import { DistributionPointsTable } from "@/components/distribution/distribution-points-table";
 import { StaggerContainer, StaggerItem, MotionCard } from "@/components/motion/motion-container";
+import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = { title: "Titik Distribusi" };
 export const dynamic = "force-dynamic";
@@ -75,21 +76,25 @@ export default async function DistributionPointsPage() {
             <div className="flex items-center gap-3">
               <AddDistributionPointDialog />
 
-              <button
+              <Button
                 type="button"
-                className="inline-flex items-center gap-1.5 rounded-lg border border-[#D0D5DD] bg-white px-3.5 py-2 text-xs font-medium text-[#344054] hover:bg-gray-50 shadow-2xs"
+                variant="outline"
+                size="sm"
+                className="h-8 inline-flex items-center gap-1.5 rounded-lg border-[#D0D5DD] bg-white px-3.5 py-2 text-xs font-medium text-[#344054] hover:bg-gray-50 shadow-2xs cursor-pointer"
               >
                 <Filter className="size-3.5 text-[#5D6679]" />
                 <span>Filters</span>
-              </button>
+              </Button>
 
-              <button
+              <Button
                 type="button"
-                className="inline-flex items-center gap-1.5 rounded-lg border border-[#D0D5DD] bg-white px-3.5 py-2 text-xs font-medium text-[#344054] hover:bg-gray-50 shadow-2xs"
+                variant="outline"
+                size="sm"
+                className="h-8 inline-flex items-center gap-1.5 rounded-lg border-[#D0D5DD] bg-white px-3.5 py-2 text-xs font-medium text-[#344054] hover:bg-gray-50 shadow-2xs cursor-pointer"
               >
                 <Download className="size-3.5 text-[#5D6679]" />
                 <span>Download all</span>
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -98,19 +103,23 @@ export default async function DistributionPointsPage() {
 
           {/* Footer */}
           <div className="flex items-center justify-between border-t border-[#F0F1F3] pt-4 mt-2">
-            <button
+            <Button
               type="button"
-              className="rounded-lg border border-[#D0D5DD] bg-white px-3.5 py-2 text-xs font-medium text-[#344054] hover:bg-gray-50 shadow-2xs"
+              variant="outline"
+              size="sm"
+              className="h-8 rounded-lg border-[#D0D5DD] bg-white px-3.5 py-2 text-xs font-medium text-[#344054] hover:bg-gray-50 shadow-2xs cursor-pointer"
             >
               Previous
-            </button>
+            </Button>
             <span className="text-xs font-medium text-[#5D6679]">Page 1 of 1</span>
-            <button
+            <Button
               type="button"
-              className="rounded-lg border border-[#D0D5DD] bg-white px-3.5 py-2 text-xs font-medium text-[#344054] hover:bg-gray-50 shadow-2xs"
+              variant="outline"
+              size="sm"
+              className="h-8 rounded-lg border-[#D0D5DD] bg-white px-3.5 py-2 text-xs font-medium text-[#344054] hover:bg-gray-50 shadow-2xs cursor-pointer"
             >
               Next
-            </button>
+            </Button>
           </div>
         </MotionCard>
       </StaggerItem>

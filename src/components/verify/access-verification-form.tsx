@@ -247,7 +247,9 @@ export function AccessVerificationForm({
               <Label htmlFor="verify-point">Titik verifikasi</Label>
               <Select value={pointId} onValueChange={(val) => setPointId(val ?? "")}>
                 <SelectTrigger id="verify-point" className="w-full">
-                  <SelectValue placeholder="Pilih titik" />
+                  <SelectValue placeholder="Pilih titik">
+                    {points.find((p) => p.id === pointId)?.publicName ?? "Pilih titik"}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {points.map((p) => (

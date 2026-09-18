@@ -4,15 +4,15 @@ import { cookies } from "next/headers";
 import {
   Boxes,
   MapPin,
-  TrendingUp,
+  Route,
   ShieldCheck,
   AlertTriangle,
   CheckCircle2,
-  XCircle,
+  ShieldOff,
   Clock,
   Calendar,
-  Users,
-  Activity,
+  Warehouse,
+  ScanLine,
   ArrowRight,
 } from "lucide-react";
 import { APP_SESSION_COOKIE, readAppSession } from "@/server/auth/app-session";
@@ -22,6 +22,14 @@ import { ConditionBarChart, HandoffTrendChart } from "@/components/shared/trend-
 import { DistributionStatusBadge, ConditionStatusBadge } from "@/components/status/status-badges";
 import { formatDateTime } from "@/components/shared/handoff-timeline";
 import { StaggerContainer, StaggerItem, MotionCard } from "@/components/motion/motion-container";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export const metadata: Metadata = { title: "Dashboard" };
 export const dynamic = "force-dynamic";
@@ -68,7 +76,7 @@ export default async function DashboardPage() {
             {/* Dalam Distribusi */}
             <div>
               <div className="flex size-9 items-center justify-center rounded-lg bg-[#EFF8FF] text-[#1570EF]">
-                <TrendingUp className="size-4.5" />
+                <Route className="size-4.5" />
               </div>
               <div className="mt-3 flex items-baseline gap-2">
                 <span className="font-bold text-base text-[#1D2939] tnum">{m.inDistribution}</span>
@@ -148,7 +156,7 @@ export default async function DashboardPage() {
             {/* Total Attempt */}
             <div>
               <div className="flex size-9 items-center justify-center rounded-lg bg-[#E0F2FE] text-[#1570EF]">
-                <Activity className="size-4.5" />
+                <ScanLine className="size-4.5" />
               </div>
               <div className="mt-3 flex items-baseline gap-2">
                 <span className="font-bold text-base text-[#1D2939] tnum">{totalAccess}</span>
@@ -170,7 +178,7 @@ export default async function DashboardPage() {
             {/* TIDAK SAH */}
             <div>
               <div className="flex size-9 items-center justify-center rounded-lg bg-[#FFEDD5] text-[#F97316]">
-                <XCircle className="size-4.5" />
+                <ShieldOff className="size-4.5" />
               </div>
               <div className="mt-3 flex items-baseline gap-2">
                 <span className="font-bold text-base text-[#F97316] tnum">
@@ -221,7 +229,7 @@ export default async function DashboardPage() {
             {/* Total Points */}
             <div className="flex flex-col items-center text-center">
               <div className="flex size-9 items-center justify-center rounded-lg bg-[#F3E8FF] text-[#845EC2]">
-                <Users className="size-4.5" />
+                <Warehouse className="size-4.5" />
               </div>
               <span className="mt-2.5 font-bold text-base text-[#1D2939] tnum">
                 {m.totalPointsCount}
@@ -236,7 +244,7 @@ export default async function DashboardPage() {
       <StaggerItem className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* Tren Kepatuhan Kondisi Harian */}
         <MotionCard className="rounded-xl border border-[#F0F1F3] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] transition-all duration-200 hover:border-[#E4E7EC] hover:shadow-[0_4px_12px_rgba(0,0,0,0.04)] lg:col-span-8">
-          <div className="flex items-center justify-between">
+          <div className="flex items-start justify-between gap-2">
             <div>
               <h2 className="text-base font-semibold text-[#1D2939]">
                 Tren Evaluasi Kondisi (14 Hari)
@@ -245,7 +253,7 @@ export default async function DashboardPage() {
                 Data kondisi hasil pembacaan berkala (Sumber: SIMULATOR).
               </p>
             </div>
-            <div className="flex items-center gap-4 text-xs text-[#5D6679]">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-[#5D6679] shrink-0">
               <span className="flex items-center gap-1.5">
                 <span className="size-2.5 rounded-full bg-[#10B981]" /> Sesuai Batas
               </span>
@@ -254,7 +262,7 @@ export default async function DashboardPage() {
               </span>
             </div>
           </div>
-          <div className="mt-4">
+          <div className="mt-4 min-w-0 overflow-hidden">
             <ConditionBarChart data={m.conditionTrend} height={260} />
           </div>
         </MotionCard>
@@ -264,7 +272,7 @@ export default async function DashboardPage() {
           <div>
             <h2 className="text-base font-semibold text-[#1D2939]">Tren Serah-terima (14 Hari)</h2>
             <p className="text-xs text-[#858D9D]">Peristiwa transisi perpindahan stage kustodi.</p>
-            <div className="mt-4">
+            <div className="mt-4 min-w-0 overflow-hidden">
               <HandoffTrendChart data={m.handoffTrend} height={210} />
             </div>
           </div>
@@ -298,54 +306,69 @@ export default async function DashboardPage() {
             </Link>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="border-b border-[#F0F1F3] text-xs font-medium text-[#858D9D]">
-                <tr>
-                  <th className="py-3 pr-4 font-normal">Kode Batch</th>
-                  <th className="py-3 px-4 font-normal">Komoditas</th>
-                  <th className="py-3 px-4 font-normal">Distribusi</th>
-                  <th className="py-3 px-4 font-normal">Kondisi</th>
-                  <th className="py-3 pl-4 text-right font-normal">Diperbarui</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#F0F1F3] text-[#1D2939]">
+          <div className="-mx-5 overflow-x-auto px-5 sm:mx-0 sm:px-0">
+            <Table>
+              <TableHeader className="border-b border-[#F0F1F3]">
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="py-3 pr-4 font-normal text-xs text-[#858D9D]">
+                    Kode Batch
+                  </TableHead>
+                  <TableHead className="hidden sm:table-cell py-3 px-4 font-normal text-xs text-[#858D9D]">
+                    Komoditas
+                  </TableHead>
+                  <TableHead className="py-3 px-4 font-normal text-xs text-[#858D9D]">
+                    Distribusi
+                  </TableHead>
+                  <TableHead className="py-3 px-4 font-normal text-xs text-[#858D9D]">
+                    Kondisi
+                  </TableHead>
+                  <TableHead className="hidden sm:table-cell py-3 pl-4 text-right font-normal text-xs text-[#858D9D]">
+                    Diperbarui
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody className="divide-y divide-[#F0F1F3] text-[#1D2939]">
                 {m.attentionBatches.length > 0 ? (
                   m.attentionBatches.map((b) => (
-                    <tr key={b.id} className="hover:bg-[#F9FAFB] transition-colors duration-150">
-                      <td className="py-3.5 pr-4 font-mono font-medium">
+                    <TableRow
+                      key={b.id}
+                      className="hover:bg-[#F9FAFB] transition-colors duration-150"
+                    >
+                      <TableCell className="py-3.5 pr-4 font-mono font-medium">
                         <Link href={`/mainapp/batch/${b.id}`} className="hover:text-[#1570EF]">
                           {b.batchCode}
                         </Link>
-                      </td>
-                      <td className="py-3.5 px-4 text-[#5D6679] text-xs">{b.productName || "–"}</td>
-                      <td className="py-3.5 px-4 text-xs">
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell py-3.5 px-4 text-[#5D6679] text-xs">
+                        {b.productName || "–"}
+                      </TableCell>
+                      <TableCell className="py-3.5 px-4 text-xs">
                         <DistributionStatusBadge
                           value={
                             b.distributionStatus as "DIDAFTARKAN" | "DALAM_DISTRIBUSI" | "SELESAI"
                           }
                         />
-                      </td>
-                      <td className="py-3.5 px-4 text-xs">
+                      </TableCell>
+                      <TableCell className="py-3.5 px-4 text-xs">
                         <ConditionStatusBadge
                           value={b.conditionStatus as "NOT_EVALUATED" | "COMPLIANT" | "AT_RISK"}
                         />
-                      </td>
-                      <td className="py-3.5 pl-4 text-right text-xs text-[#858D9D] tnum">
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell py-3.5 pl-4 text-right text-xs text-[#858D9D] tnum">
                         {formatDateTime(b.updatedAt)}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))
                 ) : (
-                  <tr>
-                    <td colSpan={5} className="py-8 text-center text-xs text-[#858D9D]">
+                  <TableRow>
+                    <TableCell colSpan={5} className="py-8 text-center text-xs text-[#858D9D]">
                       Tidak ada batch yang memerlukan perhatian segera saat ini. Seluruh kondisi
                       terpantau normal.
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 )}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         </MotionCard>
 

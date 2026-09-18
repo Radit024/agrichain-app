@@ -1,15 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Calendar,
-  KeyRound,
-  Settings,
-  Trash2,
-  Plus,
-  AlertCircle,
-  CheckCircle2,
-} from "lucide-react";
+import { Calendar, KeyRound, Settings, Trash2, Plus, Info, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -186,7 +178,7 @@ export function ManagePointDialog({
             {/* TAB 1: JADWAL */}
             <TabsContent value="jadwal" className="space-y-4 pt-3">
               <div className="rounded-lg bg-[#EFF8FF] p-3 text-xs text-[#1570EF] flex items-start gap-2">
-                <AlertCircle className="size-4 shrink-0 mt-0.5" />
+                <Info className="size-4 shrink-0 mt-0.5" />
                 <span>
                   Jadwal membatasi waktu verifikasi akses (Story 8). Verifikasi di luar jadwal akan
                   diklasifikasikan sebagai <strong>ANOMALI</strong>.

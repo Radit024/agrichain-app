@@ -7,8 +7,20 @@ import { getDbAdapter } from "@/server/db/adapter";
 import { listHandoffs, listHandoffableBatches } from "@/server/queries/internal";
 import { InitiateHandoffDialog } from "@/components/handoff/handoff-dialogs";
 import { formatDateTime } from "@/components/shared/handoff-timeline";
+import {
+  HandoffIntentBadge,
+  type HandoffIntentBadgeValue,
+} from "@/components/status/status-badges";
 import { StaggerContainer, StaggerItem, MotionCard } from "@/components/motion/motion-container";
-import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export const metadata: Metadata = { title: "Serah-terima" };
 export const dynamic = "force-dynamic";
@@ -72,124 +84,120 @@ export default async function HandoffPage() {
             <div className="flex items-center gap-3">
               <InitiateHandoffDialog batches={handoffable} />
 
-              <button
+              <Button
                 type="button"
-                className="inline-flex items-center gap-1.5 rounded-lg border border-[#D0D5DD] bg-white px-3.5 py-2 text-xs font-medium text-[#344054] hover:bg-gray-50 shadow-2xs"
+                variant="outline"
+                size="sm"
+                className="h-8 inline-flex items-center gap-1.5 rounded-lg border-[#D0D5DD] bg-white px-3.5 py-2 text-xs font-medium text-[#344054] hover:bg-gray-50 shadow-2xs cursor-pointer"
               >
                 <Filter className="size-3.5 text-[#5D6679]" />
                 <span>Filters</span>
-              </button>
+              </Button>
 
-              <button
+              <Button
                 type="button"
-                className="inline-flex items-center gap-1.5 rounded-lg border border-[#D0D5DD] bg-white px-3.5 py-2 text-xs font-medium text-[#344054] hover:bg-gray-50 shadow-2xs"
+                variant="outline"
+                size="sm"
+                className="h-8 inline-flex items-center gap-1.5 rounded-lg border-[#D0D5DD] bg-white px-3.5 py-2 text-xs font-medium text-[#344054] hover:bg-gray-50 shadow-2xs cursor-pointer"
               >
                 <History className="size-3.5 text-[#5D6679]" />
-                <span>Order History</span>
-              </button>
+                <span>Riwayat Serah-terima</span>
+              </Button>
             </div>
           </div>
 
-          {/* Orders Data Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="border-b border-[#F0F1F3] text-xs font-medium text-[#858D9D]">
-                <tr>
-                  <th className="py-3.5 pr-4 font-normal">Batch</th>
-                  <th className="py-3.5 px-4 font-normal">Asal → Tujuan</th>
-                  <th className="py-3.5 px-4 font-normal">Stage</th>
-                  <th className="py-3.5 px-4 font-normal">Status</th>
-                  <th className="py-3.5 px-4 font-normal">Kedaluwarsa</th>
-                  <th className="py-3.5 pl-4 font-normal">Dibuat</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#F0F1F3] text-[#1D2939]">
-                {intents.length > 0 ? (
-                  intents.map((r) => {
-                    const stageLabel = (from: number, to: number) =>
-                      `${from === 0 ? "Pabrik" : from === 1 ? "Distributor" : "Retailer"} → ${
-                        to === 1 ? "Distributor" : "Retailer"
-                      }`;
-                    const statusColor =
-                      r.status === "CONFIRMED"
-                        ? "text-[#10B981]"
-                        : r.status === "PENDING"
-                          ? "text-[#1570EF]"
-                          : "text-[#EF4444]";
-                    const statusLabel =
-                      r.status === "CONFIRMED"
-                        ? "CONFIRMED"
-                        : r.status === "PENDING"
-                          ? "PENDING"
-                          : r.status === "CANCELLED"
-                            ? "CANCELLED"
-                            : "EXPIRED";
-                    return (
-                      <tr key={r.intentId} className="hover:bg-[#F9FAFB]">
-                        <td className="py-4 pr-4 font-mono font-medium">
-                          <Link
-                            href={`/mainapp/batch/${r.batchId}`}
-                            className="hover:text-[#1570EF]"
-                          >
-                            {r.batchCode}
-                          </Link>
-                        </td>
-                        <td className="py-4 px-4 text-sm text-[#5D6679]">
-                          {r.senderOrgName}
-                          <span className="mx-1 text-[#D0D5DD]">→</span>
-                          {r.recipientOrgName}
-                        </td>
-                        <td className="py-4 px-4 text-xs text-[#5D6679]">
-                          {stageLabel(r.fromStage, r.toStage)}
-                        </td>
-                        <td className={`py-4 px-4 font-semibold text-xs ${statusColor}`}>
-                          <span className="inline-flex items-center gap-1.5">
-                            {r.status === "PENDING" && (
-                              <span className="relative flex size-2">
-                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75" />
-                                <span className="relative inline-flex size-2 rounded-full bg-[#1570EF]" />
-                              </span>
-                            )}
-                            {statusLabel}
-                          </span>
-                        </td>
-                        <td className="py-4 px-4 text-xs text-[#5D6679] tnum">
-                          {formatDateTime(r.expiresAt)}
-                        </td>
-                        <td className="py-4 pl-4 text-xs text-[#5D6679] tnum">
-                          {formatDateTime(r.initiatedAt)}
-                        </td>
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr>
-                    <td colSpan={6} className="py-10 text-center text-sm text-[#858D9D]">
-                      Belum ada serah-terima tercatat. Klik{" "}
-                      <span className="font-medium text-[#1570EF]">Mulai Serah-terima</span> untuk
-                      memulai.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+          {/* Tabel Serah-terima */}
+          <Table>
+            <TableHeader className="border-b border-[#F0F1F3]">
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="py-3.5 pr-4 font-normal text-xs text-[#858D9D]">
+                  Batch
+                </TableHead>
+                <TableHead className="py-3.5 px-4 font-normal text-xs text-[#858D9D]">
+                  Asal → Tujuan
+                </TableHead>
+                <TableHead className="py-3.5 px-4 font-normal text-xs text-[#858D9D]">
+                  Stage
+                </TableHead>
+                <TableHead className="py-3.5 px-4 font-normal text-xs text-[#858D9D]">
+                  Status
+                </TableHead>
+                <TableHead className="py-3.5 px-4 font-normal text-xs text-[#858D9D]">
+                  Kedaluwarsa
+                </TableHead>
+                <TableHead className="py-3.5 pl-4 font-normal text-xs text-[#858D9D]">
+                  Dibuat
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-[#F0F1F3] text-[#1D2939]">
+              {intents.length > 0 ? (
+                intents.map((r) => {
+                  const stageLabel = (from: number, to: number) =>
+                    `${from === 0 ? "Pabrik" : from === 1 ? "Distributor" : "Retailer"} → ${
+                      to === 1 ? "Distributor" : "Retailer"
+                    }`;
+                  return (
+                    <TableRow
+                      key={r.intentId}
+                      className="hover:bg-[#F9FAFB] transition-colors duration-150"
+                    >
+                      <TableCell className="py-4 pr-4 font-mono font-medium">
+                        <Link href={`/mainapp/batch/${r.batchId}`} className="hover:text-[#1570EF]">
+                          {r.batchCode}
+                        </Link>
+                      </TableCell>
+                      <TableCell className="py-4 px-4 text-sm text-[#5D6679]">
+                        {r.senderOrgName}
+                        <span className="mx-1 text-[#D0D5DD]">→</span>
+                        {r.recipientOrgName}
+                      </TableCell>
+                      <TableCell className="py-4 px-4 text-xs text-[#5D6679]">
+                        {stageLabel(r.fromStage, r.toStage)}
+                      </TableCell>
+                      <TableCell className="py-4 px-4 text-xs">
+                        <HandoffIntentBadge value={r.status as HandoffIntentBadgeValue} />
+                      </TableCell>
+                      <TableCell className="py-4 px-4 text-xs text-[#5D6679] tnum">
+                        {formatDateTime(r.expiresAt)}
+                      </TableCell>
+                      <TableCell className="py-4 pl-4 text-xs text-[#5D6679] tnum">
+                        {formatDateTime(r.initiatedAt)}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="py-10 text-center text-sm text-[#858D9D]">
+                    Belum ada serah-terima tercatat. Klik{" "}
+                    <span className="font-medium text-[#1570EF]">Mulai Serah-terima</span> untuk
+                    memulai.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
 
           {/* Footer: Pagination (Persis 07-handoffs.png) */}
           <div className="flex items-center justify-between border-t border-[#F0F1F3] pt-4 mt-2">
-            <button
+            <Button
               type="button"
-              className="rounded-lg border border-[#D0D5DD] bg-white px-3.5 py-2 text-xs font-medium text-[#344054] hover:bg-gray-50 shadow-2xs"
+              variant="outline"
+              size="sm"
+              className="h-8 rounded-lg border-[#D0D5DD] bg-white px-3.5 py-2 text-xs font-medium text-[#344054] hover:bg-gray-50 shadow-2xs cursor-pointer"
             >
               Previous
-            </button>
+            </Button>
             <span className="text-xs font-medium text-[#5D6679]">Page 1 of 10</span>
-            <button
+            <Button
               type="button"
-              className="rounded-lg border border-[#D0D5DD] bg-white px-3.5 py-2 text-xs font-medium text-[#344054] hover:bg-gray-50 shadow-2xs"
+              variant="outline"
+              size="sm"
+              className="h-8 rounded-lg border-[#D0D5DD] bg-white px-3.5 py-2 text-xs font-medium text-[#344054] hover:bg-gray-50 shadow-2xs cursor-pointer"
             >
               Next
-            </button>
+            </Button>
           </div>
         </MotionCard>
       </StaggerItem>

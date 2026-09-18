@@ -80,135 +80,111 @@ export function RegisterBatchDialog({
     <>
       <Button
         onClick={() => setOpen(true)}
-        className="h-10 gap-2 bg-[#1570EF] hover:bg-[#004EEB] text-white font-medium px-4 rounded-lg shadow-xs"
+        className="h-10 gap-2 bg-[#1570EF] hover:bg-[#004EEB] text-white font-medium px-4 rounded-lg shadow-xs cursor-pointer"
       >
         <Plus aria-hidden className="size-4" />
-        Add Product
+        Daftarkan Batch
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg bg-white p-6 rounded-xl border border-[#F0F1F3] shadow-xl">
+        <DialogContent className="max-w-md bg-white p-6 rounded-xl border border-[#F0F1F3] shadow-xl">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-[#1D2939]">New Product</DialogTitle>
+            <DialogTitle className="text-lg font-bold text-[#1D2939]">
+              Daftarkan Batch Baru
+            </DialogTitle>
+            <DialogDescription className="text-xs text-[#5D6679]">
+              Daftarkan batch komoditas pangan untuk menginisiasi rekam jejak rantai pasok dan
+              profil pemantauan kondisi.
+            </DialogDescription>
           </DialogHeader>
 
-          {/* Dotted Upload Box seperti 03-batch-register.png */}
-          <div className="my-2 flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#D0D5DD] p-4 text-center bg-[#F9FAFB]/50">
-            <div className="flex size-12 items-center justify-center rounded-lg border border-[#D0D5DD] bg-white text-[#858D9D] mb-1.5">
-              <Plus className="size-5" />
-            </div>
-            <p className="text-xs text-[#5D6679]">
-              Drag image here or{" "}
-              <span className="cursor-pointer font-medium text-[#1570EF] hover:underline">
-                Browse image
-              </span>
-            </p>
-          </div>
-
-          <div className="space-y-3.5">
-            <div className="space-y-1">
-              <Label htmlFor="batch-name" className="text-xs font-semibold text-[#344054]">
-                Product Name
+          <div className="space-y-4 pt-1">
+            <div className="space-y-1.5">
+              <Label htmlFor="batch-code" className="text-xs font-semibold text-[#344054]">
+                Kode Batch <span className="text-red-500">*</span>
               </Label>
               <Input
-                id="batch-name"
+                id="batch-code"
                 value={batchCode}
-                onChange={(e) => setBatchCode(e.target.value)}
-                placeholder="Enter product name (e.g. BATCH-2026-001)"
-                className="h-9.5 rounded-lg border-[#D0D5DD]"
+                onChange={(e) => setBatchCode(e.target.value.toUpperCase())}
+                placeholder="Contoh: BATCH-2026-0008"
+                className="h-9.5 rounded-lg border-[#D0D5DD] font-mono"
                 aria-required
               />
+              <p className="text-[11px] text-[#858D9D]">
+                Gunakan kombinasi huruf besar, angka, dan tanda strip.
+              </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label htmlFor="batch-category" className="text-xs font-semibold text-[#344054]">
-                  Category
-                </Label>
-                <Select
-                  value={categoryId}
-                  onValueChange={(v) => {
-                    setCategoryId(v ?? "");
-                    setProfileId("");
-                  }}
+            <div className="space-y-1.5">
+              <Label htmlFor="batch-category" className="text-xs font-semibold text-[#344054]">
+                Kategori Produk <span className="text-red-500">*</span>
+              </Label>
+              <Select
+                value={categoryId}
+                onValueChange={(v) => {
+                  setCategoryId(v ?? "");
+                  setProfileId("");
+                }}
+              >
+                <SelectTrigger
+                  id="batch-category"
+                  className="h-9.5 w-full rounded-lg border-[#D0D5DD]"
                 >
-                  <SelectTrigger id="batch-category" className="h-9.5 rounded-lg border-[#D0D5DD]">
-                    <SelectValue placeholder="Select product category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((c) => (
-                      <SelectItem key={c.categoryId} value={c.categoryId}>
-                        {c.categoryName} (
-                        {c.handlingMode === "COLD_CHAIN" ? "Cold chain" : "Non-cold"})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                  <SelectValue placeholder="Pilih kategori produk" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((c) => (
+                    <SelectItem key={c.categoryId} value={c.categoryId}>
+                      {c.categoryName} (
+                      {c.handlingMode === "COLD_CHAIN" ? "Cold Chain" : "Non-Cold Chain"})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-              <div className="space-y-1">
-                <Label htmlFor="batch-profile" className="text-xs font-semibold text-[#344054]">
-                  Monitoring Profile
-                </Label>
-                <Select
-                  value={profileId}
-                  onValueChange={(v) => setProfileId(v ?? "")}
-                  disabled={!selectedCategory}
+            <div className="space-y-1.5">
+              <Label htmlFor="batch-profile" className="text-xs font-semibold text-[#344054]">
+                Profil Pemantauan Kondisi <span className="text-red-500">*</span>
+              </Label>
+              <Select
+                value={profileId}
+                onValueChange={(v) => setProfileId(v ?? "")}
+                disabled={!selectedCategory}
+              >
+                <SelectTrigger
+                  id="batch-profile"
+                  className="h-9.5 w-full rounded-lg border-[#D0D5DD]"
                 >
-                  <SelectTrigger id="batch-profile" className="h-9.5 rounded-lg border-[#D0D5DD]">
-                    <SelectValue
-                      placeholder={
-                        selectedCategory ? "Select profile version" : "Select category first"
-                      }
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {selectedCategory?.profiles.map((p) => (
-                      <SelectItem key={p.profileId} value={p.profileId}>
-                        Version {p.version}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold text-[#344054]">Buying Price</Label>
-                <Input
-                  defaultValue="Rp 430.000"
-                  placeholder="Enter buying price (Rp)"
-                  className="h-9.5 rounded-lg border-[#D0D5DD]"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold text-[#344054]">Quantity</Label>
-                <Input
-                  defaultValue="43 Packets"
-                  placeholder="Enter product quantity"
-                  className="h-9.5 rounded-lg border-[#D0D5DD]"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold text-[#344054]">Expiry Date</Label>
-                <Input
-                  defaultValue="11/12/26"
-                  placeholder="Enter expiry date"
-                  className="h-9.5 rounded-lg border-[#D0D5DD]"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold text-[#344054]">Threshold Value</Label>
-                <Input
-                  defaultValue="12 Packets"
-                  placeholder="Enter threshold value"
-                  className="h-9.5 rounded-lg border-[#D0D5DD]"
-                />
-              </div>
+                  <SelectValue
+                    placeholder={
+                      selectedCategory
+                        ? "Pilih versi profil"
+                        : "Pilih kategori produk terlebih dahulu"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {selectedCategory?.profiles.map((p) => (
+                    <SelectItem key={p.profileId} value={p.profileId}>
+                      Versi {p.version} (
+                      {selectedCategory.handlingMode === "COLD_CHAIN"
+                        ? "Kontrol Suhu & Pendingin"
+                        : "Monitoring Umum"}
+                      )
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedCategory ? (
+                <p className="text-[11px] text-[#858D9D]">
+                  Mode penanganan:{" "}
+                  <span className="font-semibold text-[#1570EF]">
+                    {selectedCategory.handlingMode}
+                  </span>
+                </p>
+              ) : null}
             </div>
 
             {error ? (
@@ -230,7 +206,7 @@ export function RegisterBatchDialog({
               disabled={pending}
               className="h-10 px-4 rounded-lg border-[#D0D5DD] text-[#5D6679] hover:bg-gray-50"
             >
-              Discard
+              Batal
             </Button>
             <Button
               type="button"
@@ -238,7 +214,7 @@ export function RegisterBatchDialog({
               disabled={pending || !categoryId || !profileId || batchCode.trim().length < 3}
               className="h-10 px-5 rounded-lg bg-[#1570EF] hover:bg-[#004EEB] text-white font-medium shadow-xs"
             >
-              {pending ? "Adding..." : "Add Product"}
+              {pending ? "Mendaftarkan..." : "Daftarkan Batch"}
             </Button>
           </DialogFooter>
         </DialogContent>

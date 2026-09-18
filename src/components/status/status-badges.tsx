@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 /**
  * StatusBadge — DESIGN.md §9.3: tiga dimensi status terpisah
@@ -26,15 +27,16 @@ export interface StatusBadgeProps {
 
 export function StatusBadge({ tone, children, className }: StatusBadgeProps) {
   return (
-    <span
+    <Badge
+      variant="outline"
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-semibold leading-4",
+        "inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-semibold leading-4 shadow-none",
         toneClasses[tone],
         className,
       )}
     >
       {children}
-    </span>
+    </Badge>
   );
 }
 

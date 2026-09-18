@@ -4,6 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { getEmbeddedConnectedWallet, usePrivy, useWallets } from "@privy-io/react-auth";
 import { User, AtSign } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export function InvitationActivationForm({ invitationToken }: { invitationToken: string }) {
   const router = useRouter();
@@ -53,13 +56,13 @@ export function InvitationActivationForm({ invitationToken }: { invitationToken:
 
   if (!authenticated) {
     return (
-      <button
+      <Button
         className="flex h-11 w-full items-center justify-center rounded-xl bg-blue-600 text-sm font-semibold text-white shadow-md shadow-blue-500/25 transition-all hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-500/35 active:scale-[0.99] cursor-pointer"
         onClick={() => login()}
         type="button"
       >
         Lanjutkan dengan email atau Google
-      </button>
+      </Button>
     );
   }
 
@@ -72,16 +75,16 @@ export function InvitationActivationForm({ invitationToken }: { invitationToken:
       }}
     >
       <div>
-        <label
+        <Label
           className="mb-1.5 block text-xs font-semibold text-gray-800"
           htmlFor="activation-name"
         >
           Nama tampilan
-        </label>
+        </Label>
         <div className="relative flex items-center">
-          <User className="pointer-events-none absolute left-3.5 size-4.5 text-gray-400" />
-          <input
-            className="h-11 w-full rounded-xl border border-gray-200 bg-white pl-10 pr-3.5 text-sm text-gray-900 shadow-xs transition-all placeholder:text-gray-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/15"
+          <User className="pointer-events-none absolute left-3.5 size-4.5 text-gray-400 z-10" />
+          <Input
+            className="h-11 w-full rounded-xl border-gray-200 bg-white pl-10 pr-3.5 text-sm text-gray-900 shadow-xs transition-all placeholder:text-gray-400 focus-visible:border-blue-600 focus-visible:ring-2 focus-visible:ring-blue-600/15"
             id="activation-name"
             onChange={(event) => setDisplayName(event.target.value)}
             placeholder="Masukkan nama tampilan"
@@ -93,16 +96,16 @@ export function InvitationActivationForm({ invitationToken }: { invitationToken:
       </div>
 
       <div>
-        <label
+        <Label
           className="mb-1.5 block text-xs font-semibold text-gray-800"
           htmlFor="activation-email"
         >
           Email undangan
-        </label>
+        </Label>
         <div className="relative flex items-center">
-          <AtSign className="pointer-events-none absolute left-3.5 size-4.5 text-gray-400" />
-          <input
-            className="h-11 w-full rounded-xl border border-gray-200 bg-white pl-10 pr-3.5 text-sm text-gray-900 shadow-xs transition-all placeholder:text-gray-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/15"
+          <AtSign className="pointer-events-none absolute left-3.5 size-4.5 text-gray-400 z-10" />
+          <Input
+            className="h-11 w-full rounded-xl border-gray-200 bg-white pl-10 pr-3.5 text-sm text-gray-900 shadow-xs transition-all placeholder:text-gray-400 focus-visible:border-blue-600 focus-visible:ring-2 focus-visible:ring-blue-600/15"
             id="activation-email"
             onChange={(event) => setEmail(event.target.value)}
             placeholder="Masukkan email undangan"
@@ -122,13 +125,13 @@ export function InvitationActivationForm({ invitationToken }: { invitationToken:
         </p>
       ) : null}
 
-      <button
+      <Button
         className="mt-6 flex h-11 w-full items-center justify-center rounded-xl bg-blue-600 text-sm font-semibold text-white shadow-md shadow-blue-500/25 transition-all hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-500/35 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-60 cursor-pointer"
         disabled={pending}
         type="submit"
       >
         {pending ? "Mengaktifkan akun…" : "Aktifkan akun"}
-      </button>
+      </Button>
     </form>
   );
 }

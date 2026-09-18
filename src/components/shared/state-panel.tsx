@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { AlertTriangle, Inbox, Lock, RefreshCw, SearchX } from "lucide-react";
+import { AlertTriangle, Inbox, Lock, RefreshCw, SearchX, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -73,7 +73,7 @@ function StateIcon({ state }: { state: string }) {
     case "error":
       return <AlertTriangle aria-hidden className={cls} />;
     case "rate-limited":
-      return <RefreshCw aria-hidden className={cls} />;
+      return <Timer aria-hidden className={cls} />;
     default:
       return <SearchX aria-hidden className={cls} />;
   }

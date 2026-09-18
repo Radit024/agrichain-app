@@ -5,6 +5,7 @@ import { APP_SESSION_COOKIE, readAppSession } from "@/server/auth/app-session";
 import { getDbAdapter } from "@/server/db/adapter";
 import { listCategoryProfiles } from "@/server/queries/internal";
 import { StaggerContainer, StaggerItem, MotionCard } from "@/components/motion/motion-container";
+import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = { title: "Pengaturan Organisasi" };
 export const dynamic = "force-dynamic";
@@ -52,13 +53,13 @@ export default async function SettingsPage() {
               Kelola fasilitas distribusi, standar mutu rantai pasok, dan keamanan contract.
             </p>
           </div>
-          <button
+          <Button
             type="button"
-            className="inline-flex items-center gap-1.5 rounded-lg bg-[#1570EF] hover:bg-[#004EEB] active:scale-95 px-4 py-2 text-xs font-semibold text-white shadow-xs transition-all duration-150"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[#1570EF] hover:bg-[#004EEB] active:scale-95 px-4 py-2 text-xs font-semibold text-white shadow-xs transition-all duration-150 cursor-pointer"
           >
             <Plus className="size-4" />
             <span>Tambah Fasilitas</span>
-          </button>
+          </Button>
         </div>
       </StaggerItem>
 
@@ -87,12 +88,14 @@ export default async function SettingsPage() {
                   <p className="text-xs text-[#858D9D] font-mono mt-1">{fallback.phone}</p>
                 </div>
 
-                <button
+                <Button
                   type="button"
-                  className="rounded-lg border border-[#1570EF] bg-white px-5 py-1.5 text-xs font-semibold text-[#1570EF] hover:bg-[#EFF8FF] active:scale-95 transition-all duration-150"
+                  variant="outline"
+                  size="sm"
+                  className="rounded-lg border-[#1570EF] bg-white px-5 py-1.5 text-xs font-semibold text-[#1570EF] hover:bg-[#EFF8FF] hover:text-[#1570EF] active:scale-95 transition-all duration-150 cursor-pointer"
                 >
                   Edit
-                </button>
+                </Button>
               </div>
             </MotionCard>
           );
@@ -115,12 +118,14 @@ export default async function SettingsPage() {
                   <p className="text-xs text-[#858D9D]">{b.city}</p>
                   <p className="text-xs text-[#858D9D] font-mono mt-1">{b.phone}</p>
                 </div>
-                <button
+                <Button
                   type="button"
-                  className="rounded-lg border border-[#1570EF] bg-white px-5 py-1.5 text-xs font-semibold text-[#1570EF] hover:bg-[#EFF8FF] active:scale-95 transition-all duration-150"
+                  variant="outline"
+                  size="sm"
+                  className="rounded-lg border-[#1570EF] bg-white px-5 py-1.5 text-xs font-semibold text-[#1570EF] hover:bg-[#EFF8FF] hover:text-[#1570EF] active:scale-95 transition-all duration-150 cursor-pointer"
                 >
                   Edit
-                </button>
+                </Button>
               </div>
             </MotionCard>
           ))}
@@ -168,12 +173,14 @@ export default async function SettingsPage() {
                   kritis terdeteksi.
                 </p>
                 {isContractAdmin ? (
-                  <button
+                  <Button
                     type="button"
-                    className="mt-2.5 rounded-md bg-[#EF4444] px-3 py-1 text-xs font-semibold text-white hover:bg-[#DC2626] active:scale-95 transition-all duration-150"
+                    variant="destructive"
+                    size="sm"
+                    className="mt-2.5 rounded-md bg-[#EF4444] px-3 py-1 text-xs font-semibold text-white hover:bg-[#DC2626] active:scale-95 transition-all duration-150 cursor-pointer"
                   >
                     Aktifkan Emergency Pause
-                  </button>
+                  </Button>
                 ) : (
                   <p className="mt-1 text-[11px] font-medium text-[#EF4444]">
                     Akses terbatas untuk CONTRACT_ADMIN.

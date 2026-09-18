@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
 /**
  * MetricCard (DESIGN.md §9.3): panel judul + sel metrik sebanding dengan
@@ -17,16 +19,18 @@ export function MetricCard({
   children: ReactNode;
 }) {
   return (
-    <section
+    <Card
       className={cn(
-        "rounded-xl border border-border bg-card p-5 shadow-[0_1px_3px_rgba(16,42,51,0.02)]",
+        "rounded-xl border border-border bg-card p-5 shadow-[0_1px_3px_rgba(16,42,51,0.02)] gap-0",
         className,
       )}
       aria-label={title}
     >
-      <h2 className="text-base font-semibold tracking-tight text-ink">{title}</h2>
-      <div className="mt-4 flex items-stretch">{children}</div>
-    </section>
+      <CardHeader className="p-0 pb-4">
+        <CardTitle className="text-base font-semibold tracking-tight text-ink">{title}</CardTitle>
+      </CardHeader>
+      <CardContent className="p-0 flex items-stretch">{children}</CardContent>
+    </Card>
   );
 }
 
@@ -94,5 +98,5 @@ export function MetricCell({
 
 /** Divider vertikal antar sel — dipisah agar terlihat di flex row. */
 export function MetricDivider() {
-  return <span aria-hidden className="w-px shrink-0 self-stretch bg-border" />;
+  return <Separator orientation="vertical" className="w-px shrink-0 self-stretch bg-border" />;
 }

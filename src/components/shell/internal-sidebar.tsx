@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
-import { Home, Boxes, Truck, MapPin, BarChart3, Settings, LogOut } from "lucide-react";
+import { Home, Boxes, Truck, MapPin, FileBarChart2, Settings, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "motion/react";
 import { HexagonBrandLogo, BrandWordmark } from "@/components/brand/brand-logo";
@@ -19,7 +19,7 @@ const navItems = [
   { href: "/mainapp/batch", label: "Batch", icon: Boxes },
   { href: "/mainapp/serah-terima", label: "Serah-terima", icon: Truck },
   { href: "/mainapp/titik-distribusi", label: "Titik Distribusi", icon: MapPin },
-  { href: "/mainapp/laporan", label: "Laporan", icon: BarChart3 },
+  { href: "/mainapp/laporan", label: "Laporan", icon: FileBarChart2 },
 ] as const;
 
 export function InternalSidebar({
