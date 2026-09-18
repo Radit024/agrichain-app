@@ -53,7 +53,13 @@ export function DistributionStatusBadge({ value }: { value: DistributionBadgeVal
   return (
     <StatusBadge tone={m.tone}>
       {value === "DALAM_DISTRIBUSI" ? (
-        <span aria-hidden className="size-1.5 rounded-full bg-current ring-2 ring-current/30" />
+        <span className="relative flex size-1.5">
+          <span
+            aria-hidden
+            className="absolute inline-flex h-full w-full animate-ping rounded-full bg-current opacity-75"
+          />
+          <span aria-hidden className="relative inline-flex size-1.5 rounded-full bg-current" />
+        </span>
       ) : (
         <span aria-hidden className="size-1.5 rounded-full bg-current" />
       )}
@@ -77,7 +83,16 @@ export function ConditionStatusBadge({ value }: { value: ConditionBadgeValue }) 
   return (
     <StatusBadge tone={m.tone}>
       {value === "AT_RISK" ? (
-        <span aria-hidden className={cn("size-1.5 rounded-full ring-2 ring-current/30", m.dot)} />
+        <span className="relative flex size-1.5">
+          <span
+            aria-hidden
+            className={cn(
+              "absolute inline-flex h-full w-full animate-ping rounded-full opacity-75",
+              m.dot,
+            )}
+          />
+          <span aria-hidden className={cn("relative inline-flex size-1.5 rounded-full", m.dot)} />
+        </span>
       ) : (
         <span aria-hidden className={cn("size-1.5 rounded-full", m.dot)} />
       )}

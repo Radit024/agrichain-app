@@ -5,6 +5,7 @@ import { getDbAdapter } from "@/server/db/adapter";
 import { listMyAssignedPoints } from "@/server/queries/internal";
 import { AccessVerificationForm } from "@/components/verify/access-verification-form";
 import { StatePanel } from "@/components/shared/state-panel";
+import { StaggerContainer, StaggerItem } from "@/components/motion/motion-container";
 
 export const metadata: Metadata = { title: "Verifikasi Akses" };
 export const dynamic = "force-dynamic";
@@ -21,26 +22,30 @@ export default async function VerificationPage({
   const { batch } = await searchParams;
 
   return (
-    <div className="space-y-5">
-      <header>
-        <h1 className="text-2xl font-semibold leading-8 text-ink">Verifikasi Akses</h1>
-        <p className="mt-1 text-sm text-ink-muted">
-          Pindai QR batch, lalu masukkan kode otorisasi. Hasil menunjukkan kesesuaian data tercatat
-          — bukan akses fisik.
-        </p>
-      </header>
+    <StaggerContainer className="space-y-5 pb-12">
+      <StaggerItem>
+        <header>
+          <h1 className="text-2xl font-semibold leading-8 text-ink">Verifikasi Akses</h1>
+          <p className="mt-1 text-sm text-ink-muted">
+            Pindai QR batch, lalu masukkan kode otorisasi. Hasil menunjukkan kesesuaian data
+            tercatat — bukan akses fisik.
+          </p>
+        </header>
+      </StaggerItem>
 
       {points.length === 0 ? (
-        <StatePanel
-          state="no-access"
-          title="Belum ada titik yang ditugaskan kepada Anda."
-          description="Hubungi administrator organisasi untuk menugaskan Anda ke titik distribusi sebelum verifikasi akses."
-        />
+        <StaggerItem>
+          <StatePanel
+            state="no-access"
+            title="Belum ada titik yang ditugaskan kepada Anda."
+            description="Hubungi administrator organisasi untuk menugaskan Anda ke titik distribusi sebelum verifikasi akses."
+          />
+        </StaggerItem>
       ) : (
-        <div className="mx-auto max-w-[560px]">
+        <StaggerItem className="mx-auto max-w-[560px]">
           <AccessVerificationForm points={points} initialPublicId={batch} />
-        </div>
+        </StaggerItem>
       )}
-    </div>
+    </StaggerContainer>
   );
 }

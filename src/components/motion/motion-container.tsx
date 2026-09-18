@@ -1,14 +1,13 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import { motion, type HTMLMotionProps } from "motion/react";
 import { cn } from "@/lib/utils";
 
 /**
- * PageTransition — Pembungkus konten rute yang ringan dan responsif.
- * Menghilangkan `key={pathname}` agar React TIDAK menghancurkan dan membangun
- * ulang seluruh DOM tree pada setiap navigasi, sehingga navigasi instan (<16ms)
- * dan bebas lag.
+ * PageTransition — Pembungkus konten rute utama yang memicu animasi pop up
+ * yang halus, snappy, dan GPU-accelerated pada setiap perpindahan halaman (route change).
  */
 export function PageTransition({
   children,
@@ -17,16 +16,29 @@ export function PageTransition({
   children: ReactNode;
   className?: string;
 }) {
+  const pathname = usePathname();
+
   return (
-    <div className={cn("w-full animate-in fade-in-50 duration-150 ease-out", className)}>
+    <motion.div
+      key={pathname}
+      initial={{ opacity: 0, scale: 0.97, y: 10 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{
+        type: "spring",
+        stiffness: 380,
+        damping: 28,
+        mass: 0.65,
+      }}
+      className={cn("w-full origin-top", className)}
+    >
       {children}
-    </div>
+    </motion.div>
   );
 }
 
 /**
- * StaggerContainer — Kontainer yang membungkus konten tanpa menyembunyikan SSR
- * dan tanpa memblokir thread JavaScript.
+ * StaggerContainer — Kontainer kartu fitur yang memicu kaskade pop up
+ * berurutan saat halaman dimuat.
  */
 export function StaggerContainer({
   children,
@@ -35,14 +47,52 @@ export function StaggerContainer({
   children: ReactNode;
   className?: string;
 }) {
-  return <div className={cn("w-full", className)}>{children}</div>;
+  return (
+    <motion.div
+      initial="hidden"
+      animate="show"
+      variants={{
+        hidden: { opacity: 0 },
+        show: {
+          opacity: 1,
+          transition: {
+            staggerChildren: 0.04,
+            delayChildren: 0.01,
+          },
+        },
+      }}
+      className={cn("w-full", className)}
+    >
+      {children}
+    </motion.div>
+  );
 }
 
 /**
- * StaggerItem — Elemen grid/item layout yang bersih dan tidak menghambat klik.
+ * StaggerItem — Elemen bento card / baris konten dengan animasi pop up individual.
  */
 export function StaggerItem({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={className}>{children}</div>;
+  return (
+    <motion.div
+      variants={{
+        hidden: { opacity: 0, scale: 0.98, y: 8 },
+        show: {
+          opacity: 1,
+          scale: 1,
+          y: 0,
+          transition: {
+            type: "spring",
+            stiffness: 400,
+            damping: 28,
+            mass: 0.6,
+          },
+        },
+      }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
 }
 
 /**
@@ -85,5 +135,20 @@ export function MotionButton({ children, className, ...props }: HTMLMotionProps<
     >
       {children}
     </motion.button>
+  );
+}
+
+/**
+ * ScanlineBeam — Garis laser pemindai visual untuk viewfinder kamera QR.
+ */
+export function ScanlineBeam({ className }: { className?: string }) {
+  return (
+    <div
+      aria-hidden
+      className={cn(
+        "pointer-events-none absolute inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-[#1570EF] to-transparent shadow-[0_0_8px_#1570EF] animate-scanline z-20",
+        className,
+      )}
+    />
   );
 }

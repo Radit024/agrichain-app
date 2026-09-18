@@ -79,7 +79,9 @@ export function ConditionBarChart({
             fill="#10B981"
             radius={[4, 4, 0, 0]}
             maxBarSize={18}
-            isAnimationActive={false}
+            isAnimationActive={true}
+            animationDuration={600}
+            animationEasing="ease-out"
           />
           <Bar
             dataKey="atRisk"
@@ -87,7 +89,9 @@ export function ConditionBarChart({
             fill="#F43F5E"
             radius={[4, 4, 0, 0]}
             maxBarSize={18}
-            isAnimationActive={false}
+            isAnimationActive={true}
+            animationDuration={600}
+            animationEasing="ease-out"
           />
         </BarChart>
       </ResponsiveContainer>
@@ -146,7 +150,9 @@ export function ConditionTrendChart({
             stroke="#10B981"
             strokeWidth={2}
             fill="url(#compliantFill)"
-            isAnimationActive={false}
+            isAnimationActive={true}
+            animationDuration={600}
+            animationEasing="ease-out"
           />
           <Area
             type="monotone"
@@ -155,7 +161,9 @@ export function ConditionTrendChart({
             stroke="#F43F5E"
             strokeWidth={2}
             fill="url(#atRiskFill)"
-            isAnimationActive={false}
+            isAnimationActive={true}
+            animationDuration={600}
+            animationEasing="ease-out"
           />
         </AreaChart>
       </ResponsiveContainer>
@@ -455,7 +463,9 @@ export function BatchTelemetryChart({
             strokeWidth={2}
             fill="url(#tempFill)"
             connectNulls
-            isAnimationActive={false}
+            isAnimationActive={true}
+            animationDuration={600}
+            animationEasing="ease-out"
           />
           <Area
             type="monotone"
@@ -465,7 +475,9 @@ export function BatchTelemetryChart({
             strokeWidth={2}
             fill="url(#humFill)"
             connectNulls
-            isAnimationActive={false}
+            isAnimationActive={true}
+            animationDuration={600}
+            animationEasing="ease-out"
           />
         </AreaChart>
       </ResponsiveContainer>

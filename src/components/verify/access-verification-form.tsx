@@ -5,6 +5,8 @@ import { Camera, Keyboard, Loader2, RefreshCw, ScanLine, X } from "lucide-react"
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { motion, AnimatePresence } from "motion/react";
+import { ScanlineBeam } from "@/components/motion/motion-container";
 import {
   Select,
   SelectContent,
@@ -179,11 +181,10 @@ export function AccessVerificationForm({
             Arahkan kamera ke QR batch. Izin kamera diminta browser; identitas dan kode tidak pernah
             dikirim ke halaman publik.
           </p>
-          <div
-            id="qr-reader-region"
-            ref={scannerDivRef}
-            className="mx-auto mt-3 aspect-square w-full max-w-[280px] overflow-hidden rounded-lg border-2 border-brand/40 bg-ink/5"
-          />
+          <div className="relative mx-auto mt-3 aspect-square w-full max-w-[280px] overflow-hidden rounded-lg border-2 border-brand/40 bg-ink/5">
+            <ScanlineBeam />
+            <div id="qr-reader-region" ref={scannerDivRef} className="size-full" />
+          </div>
           {scanError ? (
             <p role="alert" className="mt-3 text-sm text-warning">
               {scanError}
@@ -192,109 +193,125 @@ export function AccessVerificationForm({
         </section>
       ) : null}
 
-      {phase === "input" ? (
-        <section className="space-y-4 rounded-xl border border-border bg-card p-5">
-          <div className="space-y-1.5">
-            <Label htmlFor="verify-public-id">ID publik batch</Label>
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <ScanLine aria-hidden className="absolute left-2.5 top-2.5 size-4 text-ink-muted" />
-                <Input
-                  id="verify-public-id"
-                  value={publicId}
-                  onChange={(e) => setPublicId(e.target.value.toUpperCase())}
-                  placeholder="XXXX-XXXX-XXXX-XXXX"
-                  className="pl-8 font-mono"
-                  maxLength={19}
-                  aria-required
-                />
+      <AnimatePresence mode="wait">
+        {phase === "input" ? (
+          <motion.section
+            key="verify-input"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.18 }}
+            className="space-y-4 rounded-xl border border-border bg-card p-5"
+          >
+            <div className="space-y-1.5">
+              <Label htmlFor="verify-public-id">ID publik batch</Label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <ScanLine
+                    aria-hidden
+                    className="absolute left-2.5 top-2.5 size-4 text-ink-muted"
+                  />
+                  <Input
+                    id="verify-public-id"
+                    value={publicId}
+                    onChange={(e) => setPublicId(e.target.value.toUpperCase())}
+                    placeholder="XXXX-XXXX-XXXX-XXXX"
+                    className="pl-8 font-mono"
+                    maxLength={19}
+                    aria-required
+                  />
+                </div>
               </div>
+              <p className="text-xs text-ink-muted">
+                Format: 4 kelompok huruf/angka yang dipisah strip.
+              </p>
             </div>
-            <p className="text-xs text-ink-muted">
-              Format: 4 kelompok huruf/angka yang dipisah strip.
-            </p>
-          </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="verify-code">Kode otorisasi</Label>
-            <Input
-              id="verify-code"
-              type="password"
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              placeholder="Kode dari administrator"
-              autoComplete="off"
-              aria-required
-            />
-            <p className="text-xs text-ink-muted">
-              Kode diproses sebagai hash — tidak pernah disimpan atau dicatat.
-            </p>
-          </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="verify-code">Kode otorisasi</Label>
+              <Input
+                id="verify-code"
+                type="password"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                placeholder="Kode dari administrator"
+                autoComplete="off"
+                aria-required
+              />
+              <p className="text-xs text-ink-muted">
+                Kode diproses sebagai hash — tidak pernah disimpan atau dicatat.
+              </p>
+            </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="verify-point">Titik verifikasi Anda</Label>
-            <Select value={pointId} onValueChange={(v) => setPointId(v ?? "")}>
-              <SelectTrigger id="verify-point" aria-required>
-                <SelectValue
-                  placeholder={points.length ? "Pilih titik" : "Belum ada penugasan titik"}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {points.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.publicName} — {p.orgName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="verify-point">Titik verifikasi</Label>
+              <Select value={pointId} onValueChange={(val) => setPointId(val ?? "")}>
+                <SelectTrigger id="verify-point" className="w-full">
+                  <SelectValue placeholder="Pilih titik" />
+                </SelectTrigger>
+                <SelectContent>
+                  {points.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.publicName} ({p.orgName})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          {error ? (
-            <p
-              role="alert"
-              className="flex items-start gap-2 rounded-lg border border-danger/30 bg-danger-soft px-3 py-2 text-xs leading-4 text-danger"
+            {error ? (
+              <p role="alert" className="text-sm text-danger">
+                {error}
+              </p>
+            ) : null}
+
+            <Button
+              className="w-full"
+              size="lg"
+              onClick={() => void submit()}
+              disabled={!canSubmit}
             >
-              <X aria-hidden className="mt-0.5 size-3.5 shrink-0" />
-              {error}
-            </p>
-          ) : null}
-
-          <Button className="w-full" size="lg" onClick={() => void submit()} disabled={!canSubmit}>
-            {pending ? (
-              <Loader2 aria-hidden className="size-4 animate-spin" />
-            ) : (
-              <ShieldIconSmall />
-            )}
-            Verifikasi akses
-          </Button>
-        </section>
-      ) : (
-        <section
-          className="space-y-4 rounded-xl border border-border bg-card p-5"
-          role="status"
-          aria-label="Hasil verifikasi"
-        >
-          {result ? (
-            <>
-              <div className="flex flex-col items-center gap-2 pt-2 text-center">
-                <AccessResultBadge value={result.result} />
-                <p className="text-sm text-ink">{result.reason}</p>
-                <p className="text-xs text-ink-muted">{accessHint(result.result)}</p>
-              </div>
-              <div className="flex flex-wrap justify-center gap-2 border-t border-border pt-4">
-                <Button variant="outline" onClick={() => setPhase("input")}>
-                  <Keyboard aria-hidden className="size-4" />
-                  Verifikasi batch lain
-                </Button>
-                <Button variant="ghost" onClick={() => void submit()} disabled={pending}>
-                  <RefreshCw aria-hidden className="size-4" />
-                  Coba lagi
-                </Button>
-              </div>
-            </>
-          ) : null}
-        </section>
-      )}
+              {pending ? (
+                <Loader2 aria-hidden className="size-4 animate-spin" />
+              ) : (
+                <ShieldIconSmall />
+              )}
+              Verifikasi akses
+            </Button>
+          </motion.section>
+        ) : (
+          <motion.section
+            key="verify-result"
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: -10 }}
+            transition={{ type: "spring", stiffness: 450, damping: 30 }}
+            className="space-y-4 rounded-xl border border-border bg-card p-5"
+            role="status"
+            aria-label="Hasil verifikasi"
+          >
+            {result ? (
+              <>
+                <div className="flex flex-col items-center gap-2 pt-2 text-center">
+                  <AccessResultBadge value={result.result} />
+                  <p className="text-sm text-ink">{result.reason}</p>
+                  <p className="text-xs text-ink-muted">{accessHint(result.result)}</p>
+                </div>
+                <div className="flex flex-wrap justify-center gap-2 border-t border-border pt-4">
+                  <Button variant="outline" onClick={() => setPhase("input")}>
+                    <Keyboard aria-hidden className="size-4" />
+                    Verifikasi batch lain
+                  </Button>
+                  <Button variant="ghost" onClick={() => void submit()} disabled={pending}>
+                    <RefreshCw aria-hidden className="size-4" />
+                    Coba lagi
+                  </Button>
+                </div>
+              </>
+            ) : null}
+          </motion.section>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

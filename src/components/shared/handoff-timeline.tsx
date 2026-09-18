@@ -56,12 +56,14 @@ export function HandoffTimeline({
 
             <span
               className={cn(
-                "relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full border",
+                "relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full border transition-all duration-200",
                 confirmedEvent || (passed && i === 0)
-                  ? "border-brand bg-brand text-primary-foreground"
+                  ? "border-brand bg-brand text-primary-foreground shadow-2xs"
                   : isCurrent
-                    ? "border-brand bg-brand-soft text-brand"
-                    : "border-border bg-card text-ink-muted",
+                    ? "border-brand bg-brand-soft text-brand ring-4 ring-brand/10"
+                    : isPending
+                      ? "border-warning bg-warning-soft text-warning ring-4 ring-warning/20 animate-pulse"
+                      : "border-border bg-card text-ink-muted",
               )}
             >
               {confirmedEvent || (passed && i === 0) ? (

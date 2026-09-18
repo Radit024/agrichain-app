@@ -12,6 +12,7 @@ import {
   SourceBadge,
 } from "@/components/status/status-badges";
 import { TraceId } from "@/components/status/trace-id";
+import { StaggerContainer, StaggerItem, MotionCard } from "@/components/motion/motion-container";
 
 export const dynamic = "force-dynamic";
 
@@ -67,98 +68,106 @@ export default async function PublicBatchPage({
         </span>
       </header>
 
-      <main className="mx-auto w-full max-w-[480px] space-y-4 px-4 pt-6">
+      <StaggerContainer className="mx-auto w-full max-w-[480px] space-y-4 px-4 pt-6">
         {/* Kartu identitas batch */}
-        <section
-          className="rounded-xl border border-border bg-card p-4"
-          aria-label="Identitas batch"
-        >
-          <p className="text-xs text-ink-muted">Produk / kategori</p>
-          <p className="mt-0.5 text-base font-semibold text-ink">{batch.categoryName}</p>
-          <div className="mt-2 flex items-center gap-1.5">
-            <span className="text-xs text-ink-muted">ID:</span>
-            <TraceId value={batch.publicId} label="ID publik" />
-          </div>
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            <DistributionStatusBadge value={batch.distributionStatus} />
-            <ConditionStatusBadge value={batch.conditionStatus} />
-            <DataQualityStatusBadge value={batch.dataQualityStatus} />
-          </div>
-          {batch.paused ? (
-            <p className="mt-3 rounded-lg bg-surface-muted px-3 py-2 text-xs text-ink-muted">
-              Pencatatan status terkini ditunda sementara.
-            </p>
-          ) : null}
-        </section>
+        <StaggerItem>
+          <MotionCard
+            className="rounded-xl border border-border bg-card p-4 transition-all duration-200 hover:border-[#D0D5DD] hover:shadow-[0_4px_12px_rgba(0,0,0,0.04)]"
+            aria-label="Identitas batch"
+          >
+            <p className="text-xs text-ink-muted">Produk / kategori</p>
+            <p className="mt-0.5 text-base font-semibold text-ink">{batch.categoryName}</p>
+            <div className="mt-2 flex items-center gap-1.5">
+              <span className="text-xs text-ink-muted">ID:</span>
+              <TraceId value={batch.publicId} label="ID publik" />
+            </div>
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              <DistributionStatusBadge value={batch.distributionStatus} />
+              <ConditionStatusBadge value={batch.conditionStatus} />
+              <DataQualityStatusBadge value={batch.dataQualityStatus} />
+            </div>
+            {batch.paused ? (
+              <p className="mt-3 rounded-lg bg-surface-muted px-3 py-2 text-xs text-ink-muted">
+                Pencatatan status terkini ditunda sementara.
+              </p>
+            ) : null}
+          </MotionCard>
+        </StaggerItem>
 
         {/* Penjelasan status */}
-        <section
-          className="rounded-xl border border-border bg-card p-4"
-          aria-label="Penjelasan status"
-        >
-          <h2 className="text-sm font-semibold text-ink">Status batch</h2>
-          <p className="mt-1.5 text-xs leading-5 text-ink-muted">{statusExplanation(batch)}</p>
-          <p className="mt-2 rounded-lg bg-info-soft px-3 py-2 text-xs leading-4 text-info">
-            Status menunjukkan evaluasi atas data kondisi yang tercatat.
-          </p>
-        </section>
+        <StaggerItem>
+          <MotionCard
+            className="rounded-xl border border-border bg-card p-4 transition-all duration-200 hover:border-[#D0D5DD] hover:shadow-[0_4px_12px_rgba(0,0,0,0.04)]"
+            aria-label="Penjelasan status"
+          >
+            <h2 className="text-sm font-semibold text-ink">Status batch</h2>
+            <p className="mt-1.5 text-xs leading-5 text-ink-muted">{statusExplanation(batch)}</p>
+            <p className="mt-2 rounded-lg bg-info-soft px-3 py-2 text-xs leading-4 text-info">
+              Status menunjukkan evaluasi atas data kondisi yang tercatat.
+            </p>
+          </MotionCard>
+        </StaggerItem>
 
         {/* Timeline tersanitasi */}
-        <section
-          className="rounded-xl border border-border bg-card p-4"
-          aria-label="Riwayat tercatat"
-        >
-          <h2 className="text-sm font-semibold text-ink">Riwayat tercatat</h2>
-          <ol className="mt-3 space-y-3">
-            <li className="flex items-start gap-2.5">
-              <CheckCircle2
-                aria-hidden
-                className={`mt-0.5 size-4 shrink-0 ${
-                  batch.custodyStage >= 0 ? "text-brand" : "text-ink-muted"
-                }`}
-              />
-              <div>
-                <p className="text-sm font-medium text-ink">Pabrik</p>
-                <p className="text-xs text-ink-muted">
-                  Batch didaftarkan {formatDate(batch.createdAt)}
-                </p>
-              </div>
-            </li>
-            {timelineStage(batch, 1, "Diterima distributor")}
-            {timelineStage(batch, 2, "Diterima retailer")}
-          </ol>
-        </section>
+        <StaggerItem>
+          <MotionCard
+            className="rounded-xl border border-border bg-card p-4 transition-all duration-200 hover:border-[#D0D5DD] hover:shadow-[0_4px_12px_rgba(0,0,0,0.04)]"
+            aria-label="Riwayat tercatat"
+          >
+            <h2 className="text-sm font-semibold text-ink">Riwayat tercatat</h2>
+            <ol className="mt-3 space-y-3">
+              <li className="flex items-start gap-2.5">
+                <CheckCircle2
+                  aria-hidden
+                  className={`mt-0.5 size-4 shrink-0 ${
+                    batch.custodyStage >= 0 ? "text-brand" : "text-ink-muted"
+                  }`}
+                />
+                <div>
+                  <p className="text-sm font-medium text-ink">Pabrik</p>
+                  <p className="text-xs text-ink-muted">
+                    Batch didaftarkan {formatDate(batch.createdAt)}
+                  </p>
+                </div>
+              </li>
+              {timelineStage(batch, 1, "Diterima distributor")}
+              {timelineStage(batch, 2, "Diterima retailer")}
+            </ol>
+          </MotionCard>
+        </StaggerItem>
 
         {/* Batasan informasi — persisten */}
-        <section
-          className="rounded-xl border border-border bg-surface-muted p-4"
-          aria-label="Batasan informasi"
-        >
-          <h2 className="flex items-center gap-1.5 text-sm font-semibold text-ink">
-            <Info aria-hidden className="size-4 text-info" />
-            Batasan informasi
-          </h2>
-          <ul className="mt-2 list-inside list-disc space-y-1.5 text-xs leading-5 text-ink-muted">
-            <li>
-              Data kondisi berasal dari sumber{" "}
-              <span className="font-medium text-info">SIMULATOR</span>, bukan sensor fisik; status
-              adalah evaluasi atas data tercatat.
-            </li>
-            <li>
-              Status compliant tidak berarti produk aman dikonsumsi — informasi ini bukan
-              sertifikasi keamanan pangan.
-            </li>
-            <li>Riwayat menampilkan titik distribusi secara umum tanpa lokasi presisi.</li>
-            <li>QR dapat disalin; sistem tidak menyimpulkan keaslian fisik produk.</li>
-          </ul>
-        </section>
+        <StaggerItem>
+          <MotionCard
+            className="rounded-xl border border-border bg-surface-muted p-4 transition-all duration-200"
+            aria-label="Batasan informasi"
+          >
+            <h2 className="flex items-center gap-1.5 text-sm font-semibold text-ink">
+              <Info aria-hidden className="size-4 text-info" />
+              Batasan informasi
+            </h2>
+            <ul className="mt-2 list-inside list-disc space-y-1.5 text-xs leading-5 text-ink-muted">
+              <li>
+                Data kondisi berasal dari sumber{" "}
+                <span className="font-medium text-info">SIMULATOR</span>, bukan sensor fisik; status
+                adalah evaluasi atas data tercatat.
+              </li>
+              <li>
+                Status compliant tidak berarti produk aman dikonsumsi — informasi ini bukan
+                sertifikasi keamanan pangan.
+              </li>
+              <li>Riwayat menampilkan titik distribusi secara umum tanpa lokasi presisi.</li>
+              <li>QR dapat disalin; sistem tidak menyimpulkan keaslian fisik produk.</li>
+            </ul>
+          </MotionCard>
+        </StaggerItem>
 
         <footer className="pt-2 text-center">
           <Link href="/" className="text-xs text-ink-muted underline-offset-2 hover:underline">
             Tentang ketertelusuran distribusi pangan
           </Link>
         </footer>
-      </main>
+      </StaggerContainer>
     </div>
   );
 }
@@ -170,11 +179,11 @@ function timelineStage(batch: PublicBatchView, stage: number, label: string) {
     <li className="flex items-start gap-2.5">
       <span
         aria-hidden
-        className={`mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border-2 ${
+        className={`mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-200 ${
           event
             ? "border-brand bg-brand"
             : pending
-              ? "border-warning bg-warning-soft"
+              ? "border-warning bg-warning-soft ring-4 ring-amber-400/20 animate-pulse"
               : "border-border bg-card"
         }`}
       />

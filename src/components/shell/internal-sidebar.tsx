@@ -52,7 +52,7 @@ export function InternalSidebar({
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Brand Header */}
         <div className="flex h-[88px] shrink-0 items-center gap-3 px-7">
-          <HexagonBrandLogo className="size-9 shrink-0" />
+          <HexagonBrandLogo className="size-9 shrink-0 transition-transform duration-200 hover:scale-105 active:scale-95" />
           <BrandWordmark />
         </div>
 
@@ -137,9 +137,12 @@ export function InternalSidebar({
           type="button"
           whileTap={{ scale: 0.97 }}
           onClick={handleLogout}
-          className="flex w-full items-center gap-3.5 rounded-lg px-4 py-3 text-sm font-medium text-[#5D6679] hover:bg-[#FEF3F2] hover:text-[#EF4444] transition-colors duration-150 cursor-pointer"
+          className="group flex w-full items-center gap-3.5 rounded-lg px-4 py-3 text-sm font-medium text-[#5D6679] hover:bg-[#FEF3F2] hover:text-[#EF4444] transition-colors duration-150 cursor-pointer"
         >
-          <LogOut aria-hidden className="size-5 shrink-0" />
+          <LogOut
+            aria-hidden
+            className="size-5 shrink-0 transition-transform duration-150 group-hover:translate-x-0.5"
+          />
           <span>Keluar</span>
         </motion.button>
       </div>
