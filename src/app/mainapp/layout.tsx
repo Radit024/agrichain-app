@@ -15,12 +15,12 @@ export default async function InternalLayout({ children }: { children: ReactNode
   if (!session) redirect("/masuk");
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex h-screen w-full overflow-hidden bg-background">
       <InternalSidebar displayName={session.user.displayName} email={session.user.email} />
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col h-full overflow-hidden lg:pl-[260px]">
         <InternalTopbar />
-        <main className="mx-auto w-full max-w-[1128px] flex-1 px-4 py-6 sm:px-6 xl:px-8">
-          {children}
+        <main className="flex-1 min-h-0 overflow-y-auto">
+          <div className="w-full px-6 py-6 sm:px-8">{children}</div>
         </main>
       </div>
     </div>

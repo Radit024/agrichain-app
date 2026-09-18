@@ -38,7 +38,10 @@ export async function POST(request: Request) {
         { status: 401 },
       );
     }
-    return NextResponse.json({ error: "Sesi tidak sah." }, { status: 401 });
+    return NextResponse.json(
+      { error: "Terjadi kendala internal pada server database. Coba beberapa saat lagi." },
+      { status: 500 },
+    );
   }
 }
 

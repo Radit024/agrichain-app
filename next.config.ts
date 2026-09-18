@@ -7,13 +7,13 @@ import type { NextConfig } from "next";
  */
 const csp = [
   "default-src 'self'",
-  // Next.js inline bootstrap + Privy widget
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://auth.privy.io",
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
+  // Next.js inline bootstrap + Privy widget + Cloudflare Turnstile bot verification + Google Auth
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://auth.privy.io https://*.privy.io https://challenges.cloudflare.com https://accounts.google.com https://apis.google.com",
+  "style-src 'self' 'unsafe-inline' https://challenges.cloudflare.com",
+  "img-src 'self' data: blob: https://challenges.cloudflare.com https://*.privy.io https://lh3.googleusercontent.com",
   "font-src 'self' data:",
-  "connect-src 'self' https://auth.privy.io https://api.privy.io wss://relay.privy.io",
-  "frame-src https://auth.privy.io https://*.privy.io",
+  "connect-src 'self' https://auth.privy.io https://*.privy.io https://api.privy.io wss://relay.privy.io https://*.rpc.privy.systems https://challenges.cloudflare.com https://accounts.google.com",
+  "frame-src https://auth.privy.io https://*.privy.io https://challenges.cloudflare.com https://accounts.google.com",
   "frame-ancestors 'none'",
   "object-src 'none'",
   "base-uri 'self'",

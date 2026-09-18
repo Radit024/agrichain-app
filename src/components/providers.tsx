@@ -18,10 +18,10 @@ export function AppPrivyProvider({ children }: { children: ReactNode }) {
     <PrivyProvider
       appId={appId}
       config={{
-        loginMethods: ["email", "google"],
+        loginMethods: ["google"],
         embeddedWallets: {
           ethereum: {
-            createOnLogin: "all-users",
+            createOnLogin: "users-without-wallets",
           },
         },
         appearance: {

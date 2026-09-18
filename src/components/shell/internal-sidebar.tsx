@@ -1,122 +1,128 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { usePrivy } from "@privy-io/react-auth";
 import {
+  Home,
+  ShoppingCart,
   BarChart3,
-  Boxes,
-  ClipboardCheck,
-  LayoutDashboard,
-  MapPin,
-  QrCode,
+  UserCircle2,
+  Package,
+  Store,
   Settings,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { HexagonBrandLogo, BrandWordmark } from "@/components/brand/brand-logo";
 
 /**
- * Sidebar 280px (DESIGN.md Application shell): wordmark atas, nav utama
- * tengah, Pengaturan bawah. Item aktif = brand-soft + brand. Hidden di bawah lg.
+ * Sidebar presisi persis foto referensi 02-dashboard.png:
+ * - Logo heksagon cyan/biru + wordmark biru bold
+ * - Menu: Dashboard, Inventory, Reports, Suppliers, Orders, Manage Store
+ * - Bawah: Settings, Log Out
  */
 
 const navItems = [
-  { href: "/mainapp/dashboard", label: "Ringkasan", icon: LayoutDashboard },
-  { href: "/mainapp/batch", label: "Batch", icon: Boxes },
-  { href: "/mainapp/serah-terima", label: "Serah-terima", icon: ClipboardCheck },
-  { href: "/mainapp/verifikasi", label: "Verifikasi Akses", icon: ShieldIcon },
-  { href: "/mainapp/laporan", label: "Laporan", icon: BarChart3 },
-  { href: "/mainapp/titik-distribusi", label: "Titik Distribusi", icon: MapPin },
+  { href: "/mainapp/dashboard", label: "Dashboard", icon: Home },
+  { href: "/mainapp/batch", label: "Inventory", icon: ShoppingCart },
+  { href: "/mainapp/laporan", label: "Reports", icon: BarChart3 },
+  { href: "/mainapp/titik-distribusi", label: "Suppliers", icon: UserCircle2 },
+  { href: "/mainapp/serah-terima", label: "Orders", icon: Package },
+  { href: "/mainapp/pengaturan", label: "Manage Store", icon: Store },
 ] as const;
-
-function ShieldIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      aria-hidden
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c7 0 13-2 13-2s6 2 13 2" />
-      <path d="m9 12 2 2 4-4" />
-    </svg>
-  );
-}
 
 export function InternalSidebar({
   displayName,
   email,
 }: {
-  displayName: string;
-  email: string | null;
+  displayName?: string;
+  email?: string | null;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { logout: privyLogout } = usePrivy();
+
+  async function handleLogout() {
+    try {
+      await privyLogout();
+    } catch {
+      // Abaikan jika privy logout gagal atau tidak terotentikasi
+    }
+    await fetch("/api/auth/session", { method: "DELETE" });
+    window.location.href = "/masuk?logout=1";
+  }
 
   return (
     <aside
-      className="hidden w-[280px] shrink-0 flex-col border-r border-border bg-sidebar lg:flex"
+      className="fixed inset-y-0 left-0 z-40 hidden w-[260px] flex-col justify-between border-r border-[#F0F1F3] bg-white lg:flex h-screen"
       aria-label="Navigasi utama"
     >
-      <div className="flex h-[100px] items-center gap-2.5 border-b border-border px-6">
-        <span className="flex size-9 items-center justify-center rounded-lg bg-brand text-primary-foreground">
-          <QrCode aria-hidden className="size-5" />
-        </span>
-        <div className="leading-tight">
-          <p className="text-sm font-semibold text-ink">Agrichain</p>
-          <p className="text-xs text-ink-muted">Ketertelusuran distribusi pangan</p>
+      {/* Bagian Atas: Header & Navigasi */}
+      <div className="flex flex-1 flex-col overflow-hidden">
+        {/* Brand Header */}
+        <div className="flex h-[88px] shrink-0 items-center gap-3 px-7">
+          <HexagonBrandLogo className="size-9 shrink-0" />
+          <BrandWordmark />
         </div>
+
+        {/* Nav Menu Utama */}
+        <nav className="flex flex-1 flex-col gap-1.5 px-4 py-2 overflow-y-auto">
+          {navItems.map(({ href, label, icon: Icon }) => {
+            const active =
+              href === "/mainapp/dashboard"
+                ? pathname === "/mainapp/dashboard"
+                : pathname.startsWith(href);
+
+            return (
+              <Link
+                key={href}
+                href={href}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "flex items-center gap-3.5 rounded-lg px-4 py-3 text-sm font-medium transition-colors",
+                  active
+                    ? "text-[#1570EF] font-semibold bg-[#EFF8FF]/60"
+                    : "text-[#5D6679] hover:text-[#1D2939] hover:bg-[#F9FAFB]",
+                )}
+              >
+                <Icon
+                  aria-hidden
+                  className={cn(
+                    "size-5 shrink-0 transition-colors",
+                    active ? "text-[#1570EF]" : "text-[#5D6679]",
+                  )}
+                />
+                <span>{label}</span>
+              </Link>
+            );
+          })}
+        </nav>
       </div>
 
-      <nav className="flex flex-1 flex-col gap-0.5 px-3 py-4">
-        {navItems.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href || pathname.startsWith(`${href}/`);
-          return (
-            <Link
-              key={href}
-              href={href}
-              aria-current={active ? "page" : undefined}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                active
-                  ? "bg-brand-soft text-brand"
-                  : "text-ink-muted hover:bg-surface-muted hover:text-ink",
-              )}
-            >
-              <Icon aria-hidden className="size-[18px]" />
-              {label}
-            </Link>
-          );
-        })}
-      </nav>
-
-      <div className="flex flex-col gap-0.5 border-t border-border px-3 py-4">
+      {/* Bagian Bawah: Settings & Log Out (Mentok ke bawah, tanpa profil) */}
+      <div className="shrink-0 flex flex-col gap-1.5 border-t border-[#F0F1F3] px-4 py-4">
         <Link
           href="/mainapp/pengaturan"
-          aria-current={pathname === "/mainapp/pengaturan" ? "page" : undefined}
           className={cn(
-            "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+            "flex items-center gap-3.5 rounded-lg px-4 py-3 text-sm font-medium transition-colors",
             pathname === "/mainapp/pengaturan"
-              ? "bg-brand-soft text-brand"
-              : "text-ink-muted hover:bg-surface-muted hover:text-ink",
+              ? "text-[#1570EF] font-semibold bg-[#EFF8FF]/60"
+              : "text-[#5D6679] hover:text-[#1D2939] hover:bg-[#F9FAFB]",
           )}
         >
-          <Settings aria-hidden className="size-[18px]" />
-          Pengaturan
+          <Settings aria-hidden className="size-5 shrink-0" />
+          <span>Settings</span>
         </Link>
-        <div className="mt-2 flex items-center gap-2.5 rounded-lg px-3 py-2">
-          <span
-            aria-hidden
-            className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand-soft text-xs font-semibold text-brand"
-          >
-            {displayName.slice(0, 1).toUpperCase()}
-          </span>
-          <span className="min-w-0 leading-tight">
-            <span className="block truncate text-sm font-medium text-ink">{displayName}</span>
-            {email ? <span className="block truncate text-xs text-ink-muted">{email}</span> : null}
-          </span>
-        </div>
+
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="flex w-full items-center gap-3.5 rounded-lg px-4 py-3 text-sm font-medium text-[#5D6679] hover:bg-[#F9FAFB] hover:text-[#EF4444] transition-colors"
+        >
+          <LogOut aria-hidden className="size-5 shrink-0" />
+          <span>Log Out</span>
+        </button>
       </div>
     </aside>
   );

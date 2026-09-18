@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,13 +37,14 @@ const dataQualityOptions = [
 
 export function BatchFilters() {
   const router = useRouter();
+  const pathname = usePathname();
   const params = useSearchParams();
 
   function setParam(key: string, value: string) {
     const next = new URLSearchParams(params.toString());
     if (value && value !== "ALL") next.set(key, value);
     else next.delete(key);
-    router.push(`/batch?${next.toString()}`, { scroll: false });
+    router.push(`${pathname}?${next.toString()}`, { scroll: false });
   }
 
   const hasFilters =
@@ -120,8 +121,8 @@ export function BatchFilters() {
         <Button
           variant="ghost"
           size="sm"
-          className="h-9 text-ink-muted"
-          onClick={() => router.push("/mainapp/batch", { scroll: false })}
+          className="h-9 text-ink-muted hover:text-ink"
+          onClick={() => router.push(pathname, { scroll: false })}
         >
           <X aria-hidden className="size-3.5" />
           Hapus filter

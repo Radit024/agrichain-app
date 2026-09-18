@@ -44,7 +44,11 @@ const U = {
 
 async function main() {
   await mkdir(DB_DIR, { recursive: true });
+  // Bersihkan folder DB lama agar PGlite selalu menginisialisasi cluster Postgres yang bersih dan bebas korupsi WAL
+  const { rm } = await import("node:fs/promises");
+  await rm(DB_PATH, { recursive: true, force: true });
   const db = new PGlite(DB_PATH);
+  await db.waitReady;
   // Reset deterministik: seed harus selalu menghasilkan state identik
   await db.exec(`
     drop schema if exists public cascade;

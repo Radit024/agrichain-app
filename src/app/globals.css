@@ -11,70 +11,70 @@
    ============================================================ */
 
 :root {
-  /* Kanvas & permukaan */
-  --background: #f5f8f7;
-  --foreground: #102a33;
+  /* Kanvas & permukaan (Persis foto referensi design-references: #F0F1F3 cool gray) */
+  --background: #f0f1f3;
+  --foreground: #1d2939;
   --card: #ffffff;
-  --card-foreground: #102a33;
+  --card-foreground: #1d2939;
   --popover: #ffffff;
-  --popover-foreground: #102a33;
-  --surface-muted: #ecf3f1;
+  --popover-foreground: #1d2939;
+  --surface-muted: #f4f5f7;
 
-  /* Tinta */
-  --ink: #102a33;
-  --ink-muted: #587078;
+  /* Tinta / Typography */
+  --ink: #1d2939;
+  --ink-muted: #667085;
 
   /* Batas */
-  --border: #d6e2df;
-  --input: #d6e2df;
-  --ring: #0f5965;
+  --border: #e4e7ec;
+  --input: #d0d5dd;
+  --ring: #1570ef;
 
-  /* Aksi utama (brand dark blue-green) */
-  --primary: #0f5965;
+  /* Aksi utama (Brand Royal Blue #1570EF dari referensi) */
+  --primary: #1570ef;
   --primary-foreground: #ffffff;
-  --brand: #0f5965;
-  --brand-hover: #0a4650;
-  --brand-soft: #dceff0;
+  --brand: #1570ef;
+  --brand-hover: #004eeb;
+  --brand-soft: #eff8ff;
   --secondary: #ffffff;
-  --secondary-foreground: #102a33;
-  --accent: #ecf3f1;
-  --accent-foreground: #102a33;
-  --muted: #ecf3f1;
-  --muted-foreground: #587078;
+  --secondary-foreground: #344054;
+  --accent: #f2f4f7;
+  --accent-foreground: #1d2939;
+  --muted: #f2f4f7;
+  --muted-foreground: #667085;
 
-  /* Status — DIPISAH dari primary (DESIGN.md: jangan overload primary) */
-  --compliant: #16794a;
-  --compliant-soft: #ddf3e6;
-  --warning: #b86b00;
-  --warning-soft: #fff0d4;
-  --danger: #b42318;
-  --danger-soft: #fde7e5;
-  --destructive: #b42318;
-  --info: #1d6fa5;
-  --info-soft: #e2f0fa;
+  /* Status */
+  --compliant: #10b981;
+  --compliant-soft: #dcfce7;
+  --warning: #f59e0b;
+  --warning-soft: #fef3c7;
+  --danger: #ef4444;
+  --danger-soft: #fee2e2;
+  --destructive: #ef4444;
+  --info: #0284c7;
+  --info-soft: #e0f2fe;
 
-  /* Chart (turut palet brand/ink, bukan warna mata) */
-  --chart-1: #0f5965;
-  --chart-2: #16794a;
-  --chart-3: #b86b00;
-  --chart-4: #1d6fa5;
-  --chart-5: #587078;
+  /* Chart colors */
+  --chart-1: #1570ef;
+  --chart-2: #10b981;
+  --chart-3: #f59e0b;
+  --chart-4: #f43f5e;
+  --chart-5: #845ec2;
 
-  /* Radius: kartu 12px, tombol/badge 8px (DESIGN.md Shapes) */
+  /* Radius: kartu 12px, tombol 8px */
   --radius: 0.75rem;
   --radius-control: 0.5rem;
 
-  /* Elevasi: satu shadow dialog saja (DESIGN.md Elevation) */
-  --shadow-dialog: 0 12px 32px rgba(16, 42, 51, 0.14);
+  /* Elevasi */
+  --shadow-dialog: 0 12px 32px rgba(16, 24, 40, 0.12);
 
   --sidebar: #ffffff;
-  --sidebar-foreground: #102a33;
-  --sidebar-primary: #0f5965;
+  --sidebar-foreground: #344054;
+  --sidebar-primary: #1570ef;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #dceff0;
-  --sidebar-accent-foreground: #0f5965;
-  --sidebar-border: #d6e2df;
-  --sidebar-ring: #0f5965;
+  --sidebar-accent: #eff8ff;
+  --sidebar-accent-foreground: #1570ef;
+  --sidebar-border: #f0f1f3;
+  --sidebar-ring: #1570ef;
 }
 
 @theme inline {

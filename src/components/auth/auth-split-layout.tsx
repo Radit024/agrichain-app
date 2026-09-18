@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { HexagonBrandLogo } from "@/components/brand/brand-logo";
 
 type AuthSplitLayoutProps = {
   title?: string;
@@ -8,6 +9,11 @@ type AuthSplitLayoutProps = {
   hideHeader?: boolean;
 };
 
+/**
+ * Layout Auth Split 2 Kolom Persis 01-authentication.png:
+ * - Kiri: Background putih, Logo Hexagon Besar + Wordmark KANBAN / AGRICHAIN
+ * - Kanan: Form container bersih
+ */
 export function AuthSplitLayout({
   title,
   description,
@@ -16,80 +22,30 @@ export function AuthSplitLayout({
   hideHeader = false,
 }: AuthSplitLayoutProps) {
   return (
-    <main className="min-h-svh bg-white lg:grid lg:grid-cols-2">
-      <section className="hidden min-h-svh items-center justify-center border-r border-border lg:flex lg:px-12 bg-white">
-        <BrandPresentation />
+    <main className="min-h-screen bg-white lg:grid lg:grid-cols-2">
+      {/* Kolom Kiri: Logo Hexagon Besar (Persis 01-authentication.png) */}
+      <section className="hidden min-h-screen items-center justify-center border-r border-[#F0F1F3] bg-white lg:flex lg:px-12">
+        <div className="flex flex-col items-center text-center">
+          <HexagonBrandLogo className="size-40" />
+          <p className="mt-8 text-3xl font-black tracking-widest text-[#1570EF]">AGRICHAIN</p>
+        </div>
       </section>
 
-      <section className="relative flex min-h-svh items-center justify-center overflow-hidden bg-[#fafafc] px-6 py-10 sm:px-10 lg:px-12">
-        {/* Soft ambient gradient glow */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-rose-100/40 blur-3xl"
-        />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -left-20 -top-20 h-80 w-80 rounded-full bg-blue-100/30 blur-3xl"
-        />
-
-        <div className="relative z-10 w-full max-w-[390px]">
-          <div className="mb-8 lg:hidden">
-            <CompactBrand />
-          </div>
+      {/* Kolom Kanan: Form Login */}
+      <section className="flex min-h-screen items-center justify-center bg-white px-6 py-12 sm:px-10 lg:px-12">
+        <div className="w-full max-w-[380px]">
           {!hideHeader && title ? (
-            <header className="mb-7 text-left">
-              <h1 className="text-[26px] font-bold leading-tight tracking-tight text-ink">
-                {title}
-              </h1>
-              {description ? (
-                <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-muted">{description}</p>
-              ) : null}
+            <header className="mb-6 text-center">
+              <h1 className="text-2xl font-bold tracking-tight text-[#1D2939]">{title}</h1>
+              {description ? <p className="mt-1 text-xs text-[#667085]">{description}</p> : null}
             </header>
           ) : null}
-          <div>{children}</div>
-          {note ? (
-            <div className="mt-6 text-center text-xs leading-[18px] text-ink-muted">{note}</div>
-          ) : null}
+
+          {children}
+
+          {note ? <div className="mt-6 text-center text-xs text-[#667085]">{note}</div> : null}
         </div>
       </section>
     </main>
-  );
-}
-
-function BrandPresentation() {
-  return (
-    <div className="flex max-w-sm flex-col items-center text-center">
-      <AgrichainMark className="size-32" />
-      <p className="mt-5 text-[25px] font-semibold tracking-[0.09em] text-brand">AGRICHAIN</p>
-      <p className="mt-3 max-w-[280px] text-sm leading-5 text-ink-muted">
-        Ketertelusuran distribusi pangan yang dapat diaudit
-      </p>
-    </div>
-  );
-}
-
-function CompactBrand() {
-  return (
-    <div className="flex items-center justify-center gap-2.5">
-      <AgrichainMark className="size-8" />
-      <span className="text-base font-semibold tracking-[-0.02em] text-ink">Agrichain</span>
-    </div>
-  );
-}
-
-function AgrichainMark({ className }: { className: string }) {
-  return (
-    <svg
-      aria-hidden="true"
-      className={className}
-      fill="none"
-      viewBox="0 0 128 128"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path d="M20 39.2 64 14l44 25.2v49.6L64 114 20 88.8V39.2Z" fill="#0F96C7" />
-      <path d="M49.5 76.2 77.8 47.9" stroke="white" strokeLinecap="round" strokeWidth="9" />
-      <path d="m69.5 31.5 13.8 13.8-45 45-13.8-13.8 45-45Z" fill="#16C784" />
-      <path d="m43.6 94.8 42.1-42.1 15.2 15.2-42.1 42.1-15.2-15.2Z" fill="white" />
-    </svg>
   );
 }

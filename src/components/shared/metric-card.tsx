@@ -18,10 +18,13 @@ export function MetricCard({
 }) {
   return (
     <section
-      className={cn("rounded-xl border border-border bg-card p-5", className)}
+      className={cn(
+        "rounded-xl border border-border bg-card p-5 shadow-[0_1px_3px_rgba(16,42,51,0.02)]",
+        className,
+      )}
       aria-label={title}
     >
-      <h2 className="text-sm font-semibold text-ink-muted">{title}</h2>
+      <h2 className="text-base font-semibold tracking-tight text-ink">{title}</h2>
       <div className="mt-4 flex items-stretch">{children}</div>
     </section>
   );
@@ -31,23 +34,28 @@ export function MetricCell({
   icon,
   value,
   label,
-  tone = "brand",
+  tone = "neutral",
+  iconTone,
   href,
 }: {
   icon?: ReactNode;
   value: string | number;
   label: string;
-  tone?: "brand" | "compliant" | "warning" | "danger" | "info" | "neutral";
+  tone?: "brand" | "compliant" | "warning" | "danger" | "info" | "neutral" | "purple";
+  iconTone?: "brand" | "compliant" | "warning" | "danger" | "info" | "neutral" | "purple";
   href?: string;
 }) {
   const toneSoft: Record<string, string> = {
-    brand: "bg-brand-soft text-brand",
-    compliant: "bg-compliant-soft text-compliant",
-    warning: "bg-warning-soft text-warning",
-    danger: "bg-danger-soft text-danger",
-    info: "bg-info-soft text-info",
+    brand: "bg-[#E0F2FE] text-[#0284C7]",
+    purple: "bg-[#F3E8FF] text-[#9333EA]",
+    compliant: "bg-[#DCFCE7] text-[#16A34A]",
+    warning: "bg-[#FEF3C7] text-[#D97706]",
+    danger: "bg-[#FEE2E2] text-[#DC2626]",
+    info: "bg-[#E0F2FE] text-[#0284C7]",
     neutral: "bg-surface-muted text-ink-muted",
   };
+
+  const activeIconTone = iconTone ?? (tone === "neutral" ? "brand" : tone);
 
   const content = (
     <>
@@ -55,19 +63,21 @@ export function MetricCell({
         <span
           aria-hidden
           className={cn(
-            "flex size-6 shrink-0 items-center justify-center rounded-md",
-            toneSoft[tone],
+            "flex size-9 shrink-0 items-center justify-center rounded-lg shadow-xs",
+            toneSoft[activeIconTone],
           )}
         >
           {icon}
         </span>
       ) : null}
-      <p className="tnum mt-2 text-xl font-semibold leading-7 text-ink sm:text-2xl">{value}</p>
-      <p className="mt-0.5 text-xs leading-4 text-ink-muted">{label}</p>
+      <div className="min-w-0">
+        <p className="font-mono text-2xl font-bold tracking-tight text-ink tnum">{value}</p>
+        <p className="text-xs font-medium text-ink-muted leading-4 mt-0.5">{label}</p>
+      </div>
     </>
   );
 
-  const base = "flex flex-1 flex-col px-3 first:pl-0";
+  const base = "flex flex-1 flex-col px-4 first:pl-0 last:pr-0";
 
   if (href) {
     return (

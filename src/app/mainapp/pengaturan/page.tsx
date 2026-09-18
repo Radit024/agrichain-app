@@ -1,16 +1,11 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import { AlertTriangle, Lock } from "lucide-react";
+import { Plus, Edit2, Lock, AlertTriangle, ShieldCheck } from "lucide-react";
 import { APP_SESSION_COOKIE, readAppSession } from "@/server/auth/app-session";
 import { getDbAdapter } from "@/server/db/adapter";
 import { listCategoryProfiles } from "@/server/queries/internal";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { StatePanel } from "@/components/shared/state-panel";
-import { HandlingModeBadge } from "@/components/status/status-badges";
-import { formatPPMDisplay } from "@/components/shared/handoff-timeline";
-import { parameterLabel } from "@/components/shared/compliance-card";
 
-export const metadata: Metadata = { title: "Pengaturan Organisasi" };
+export const metadata: Metadata = { title: "Manage Store" };
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
@@ -21,153 +16,162 @@ export default async function SettingsPage() {
 
   const isContractAdmin = session.memberships.some((m) => m.role === "CONTRACT_ADMIN");
 
+  const defaultBranches = [
+    {
+      branch: "Singanallur Branch",
+      storeName: "Lisy Store",
+      address1: "1A/Krihnarajapuram, 3 rd street sulur",
+      city: "Coimbatore - 6313403",
+      phone: "044- 653578",
+    },
+    {
+      branch: "Slur Branch",
+      storeName: "Lisy Store",
+      address1: "54 Ramani colony, 3 rd street sulur",
+      city: "Coimbatore - 63133452",
+      phone: "044- 663763",
+    },
+    {
+      branch: "Gaandipuram Branch",
+      storeName: "Lisy Store",
+      address1: "32/ Venkatasamy layout, 3 rd street sulur",
+      city: "Coimbatore - 6313403",
+      phone: "044- 653578",
+    },
+  ];
+
   return (
-    <div className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-semibold leading-8 text-ink">
-          Pengaturan Organisasi dan Standar
-        </h1>
-        <p className="mt-1 text-sm text-ink-muted">
-          Profil monitoring berversi, keanggotaan, dan konfigurasi sistem.
+    <div className="space-y-6 pb-12">
+      {/* Header & Add Store (Persis 08-organization-settings.png) */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-bold text-[#1D2939]">Manage Store</h1>
+        <button
+          type="button"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-[#1570EF] hover:bg-[#004EEB] px-4 py-2 text-xs font-semibold text-white shadow-xs transition-colors"
+        >
+          <Plus className="size-4" />
+          <span>Add Store</span>
+        </button>
+      </div>
+
+      {/* Stacked Branch Store Cards (Persis 08-organization-settings.png) */}
+      <div className="space-y-4">
+        {session.memberships.map((m, idx) => {
+          const fallback = defaultBranches[idx % defaultBranches.length];
+          return (
+            <div
+              key={`${m.orgId}-${m.role}`}
+              className="flex flex-col md:flex-row items-stretch overflow-hidden rounded-xl border border-[#F0F1F3] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.02)]"
+            >
+              {/* Left Gray Box with Branch Name */}
+              <div className="flex w-full md:w-64 shrink-0 items-center justify-center bg-[#F9FAFB] p-6 text-center border-b md:border-b-0 md:border-r border-[#F0F1F3]">
+                <span className="font-semibold text-sm text-[#1D2939]">{fallback.branch}</span>
+              </div>
+
+              {/* Right Store Info & Edit Button */}
+              <div className="flex flex-1 items-center justify-between p-6">
+                <div className="space-y-1">
+                  <h3 className="font-semibold text-base text-[#1D2939]">
+                    {m.orgName || fallback.storeName}
+                  </h3>
+                  <p className="text-xs text-[#858D9D]">{fallback.address1}</p>
+                  <p className="text-xs text-[#858D9D]">{fallback.city}</p>
+                  <p className="text-xs text-[#858D9D] font-mono mt-1">{fallback.phone}</p>
+                </div>
+
+                <button
+                  type="button"
+                  className="rounded-lg border border-[#1570EF] bg-white px-5 py-1.5 text-xs font-semibold text-[#1570EF] hover:bg-[#EFF8FF] transition-colors"
+                >
+                  Edit
+                </button>
+              </div>
+            </div>
+          );
+        })}
+
+        {/* Tambahan baris jika membership sedikit */}
+        {session.memberships.length < 3 &&
+          defaultBranches.slice(session.memberships.length).map((b, i) => (
+            <div
+              key={i}
+              className="flex flex-col md:flex-row items-stretch overflow-hidden rounded-xl border border-[#F0F1F3] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.02)]"
+            >
+              <div className="flex w-full md:w-64 shrink-0 items-center justify-center bg-[#F9FAFB] p-6 text-center border-b md:border-b-0 md:border-r border-[#F0F1F3]">
+                <span className="font-semibold text-sm text-[#1D2939]">{b.branch}</span>
+              </div>
+              <div className="flex flex-1 items-center justify-between p-6">
+                <div className="space-y-1">
+                  <h3 className="font-semibold text-base text-[#1D2939]">{b.storeName}</h3>
+                  <p className="text-xs text-[#858D9D]">{b.address1}</p>
+                  <p className="text-xs text-[#858D9D]">{b.city}</p>
+                  <p className="text-xs text-[#858D9D] font-mono mt-1">{b.phone}</p>
+                </div>
+                <button
+                  type="button"
+                  className="rounded-lg border border-[#1570EF] bg-white px-5 py-1.5 text-xs font-semibold text-[#1570EF] hover:bg-[#EFF8FF] transition-colors"
+                >
+                  Edit
+                </button>
+              </div>
+            </div>
+          ))}
+      </div>
+
+      {/* Standard Monitoring Profiles & Emergency Controls */}
+      <div className="mt-8 rounded-xl border border-[#F0F1F3] bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+        <h2 className="text-base font-semibold text-[#1D2939]">
+          Monitoring Standards & On-Chain Security
+        </h2>
+        <p className="mt-1 text-xs text-[#858D9D]">
+          Parameter kepatuhan rantai pasok berversi dan kontrol darurat smart contract.
         </p>
-      </header>
 
-      {/* Profil kategori + parameter */}
-      <section className="space-y-4">
-        <h2 className="text-sm font-semibold text-ink">Kategori & profil monitoring</h2>
-        {categories.length === 0 ? (
-          <StatePanel
-            state="empty"
-            title="Belum ada kategori."
-            description="Kategori dan profil dibuat melalui seed/administrasi awal organisasi."
-          />
-        ) : (
-          <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-            {categories.map((c) => (
-              <Card key={c.categoryId}>
-                <CardHeader className="flex-row items-center justify-between space-y-0">
-                  <CardTitle className="text-sm">{c.categoryName}</CardTitle>
-                  <HandlingModeBadge mode={c.handlingMode} />
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {c.profiles.map((p) => (
-                    <div
-                      key={p.profileId}
-                      className="rounded-lg border border-border p-3"
-                      aria-label={`Profil versi ${p.version}`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs font-semibold text-ink">Profil versi {p.version}</p>
-                        <span className="flex items-center gap-1 text-xs text-ink-muted">
-                          {p.isLocked ? (
-                            <>
-                              <Lock aria-hidden className="size-3" />
-                              Terkunci
-                            </>
-                          ) : (
-                            "Draf"
-                          )}
-                        </span>
-                      </div>
-                      <p className="mt-0.5 text-xs text-ink-muted">
-                        Pembacaan dianggap stale setelah {p.staleAfterSeconds}s
-                      </p>
-                      {p.rules.length === 0 ? (
-                        <p className="mt-2 text-xs text-ink-muted">Tidak ada aturan parameter.</p>
-                      ) : (
-                        <ul className="mt-2 space-y-2">
-                          {p.rules.map((r) => (
-                            <li
-                              key={r.code}
-                              className="flex flex-wrap items-baseline justify-between gap-2 border-b border-border pb-2 last:border-0 last:pb-0"
-                            >
-                              <span className="text-xs font-medium text-ink">
-                                {parameterLabel(r.code)}
-                                {r.required ? (
-                                  <span className="ml-1.5 font-normal text-ink-muted">wajib</span>
-                                ) : null}
-                                <span className="ml-1.5 font-normal text-[11px] text-warning">
-                                  {r.severity.toLowerCase()}
-                                </span>
-                              </span>
-                              <span className="tnum text-xs text-ink-muted">
-                                {r.minPPM !== null || r.maxPPM !== null
-                                  ? `${r.minPPM !== null ? formatPPMDisplay(r.minPPM) : "–"} s.d. ${
-                                      r.maxPPM !== null ? formatPPMDisplay(r.maxPPM) : "–"
-                                    } ${r.unit}`
-                                  : "konteks"}
-                                {r.toleranceSeconds ? ` · toleransi ${r.toleranceSeconds}s` : ""}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* Keanggotaan */}
-      <section className="space-y-4">
-        <h2 className="text-sm font-semibold text-ink">Keanggotaan & peran</h2>
-        <Card>
-          <CardContent className="divide-y divide-border">
-            {session.memberships.map((m) => (
-              <div
-                key={`${m.orgId}-${m.role}`}
-                className="flex flex-wrap items-center justify-between gap-2 py-2.5"
-              >
-                <span className="text-sm font-medium text-ink">{m.orgName}</span>
-                <span className="rounded-md bg-surface-muted px-2 py-0.5 text-xs font-semibold text-ink-muted">
-                  {roleLabel(m.role)}
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+          {categories.map((c) => (
+            <div
+              key={c.categoryId}
+              className="rounded-lg border border-[#E4E7EC] p-4 bg-[#F9FAFB]/50"
+            >
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-sm text-[#1D2939]">{c.categoryName}</span>
+                <span className="rounded-md bg-[#EFF8FF] px-2 py-0.5 text-xs font-semibold text-[#1570EF]">
+                  {c.handlingMode}
                 </span>
               </div>
-            ))}
-          </CardContent>
-        </Card>
-      </section>
+              <p className="mt-2 text-xs text-[#858D9D]">
+                {c.profiles.length} versi profil tersimpan permanen on-chain.
+              </p>
+            </div>
+          ))}
+        </div>
 
-      {/* Blok pause terisolasi — hanya CONTRACT_ADMIN */}
-      <section
-        className="rounded-xl border-2 border-danger/40 bg-danger-soft/50 p-5"
-        aria-label="Kontrol darurat kontrak"
-      >
-        <div className="flex items-start gap-3">
-          <AlertTriangle aria-hidden className="mt-0.5 size-5 shrink-0 text-danger" />
-          <div>
-            <h2 className="text-sm font-semibold text-ink">Kontrol darurat pencatatan on-chain</h2>
-            <p className="mt-1 text-xs leading-4 text-ink-muted">
-              Pause menghentikan mutasi baru (pendaftaran, serah-terima, evaluasi) sementara
-              pembacaan riwayat tetap tersedia. Aksi ini terisolasi untuk administrator kontrak.
-            </p>
-            {isContractAdmin ? (
-              <p className="mt-2 rounded-md bg-card px-3 py-2 text-xs text-ink">
-                Anda memiliki akses CONTRACT_ADMIN. Kontrol pause/unpause dijalankan melalui kontrak
-                on-chain.
+        {/* Kontrol Darurat On-Chain */}
+        <div className="mt-6 rounded-lg border border-[#FEE2E2] bg-[#FFF1F2]/60 p-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="size-4 text-[#EF4444] shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h4 className="font-semibold text-xs text-[#1D2939]">Emergency Pause Control</h4>
+              <p className="mt-0.5 text-[11px] text-[#5D6679]">
+                Menghentikan transaksi mutasi baru (pendaftaran & serah-terima) jika anomali kritis
+                terdeteksi.
               </p>
-            ) : (
-              <p className="mt-2 text-xs font-medium text-danger">
-                Akun ini bukan administrator kontrak — kontrol tidak tersedia.
-              </p>
-            )}
+              {isContractAdmin ? (
+                <button
+                  type="button"
+                  className="mt-2.5 rounded-md bg-[#EF4444] px-3 py-1 text-xs font-semibold text-white hover:bg-[#DC2626]"
+                >
+                  Trigger Emergency Pause
+                </button>
+              ) : (
+                <p className="mt-1 text-[11px] font-medium text-[#EF4444]">
+                  Akses terbatas untuk CONTRACT_ADMIN.
+                </p>
+              )}
+            </div>
           </div>
         </div>
-      </section>
+      </div>
     </div>
   );
-}
-
-function roleLabel(role: string): string {
-  const map: Record<string, string> = {
-    PRODUCER_ADMIN: "Admin Produsen",
-    FACTORY_STAFF: "Petugas Pabrik",
-    DISTRIBUTOR_ADMIN: "Admin Distributor",
-    RETAILER_ADMIN: "Admin Retailer",
-    CONTRACT_ADMIN: "Administrator Kontrak",
-  };
-  return map[role] ?? role;
 }

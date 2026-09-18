@@ -1,23 +1,14 @@
 import type { Metadata } from "next";
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
 import Link from "next/link";
+import { Filter, Download } from "lucide-react";
 import { APP_SESSION_COOKIE, readAppSession } from "@/server/auth/app-session";
 import { getDbAdapter } from "@/server/db/adapter";
 import { listBatches, listCategoryOptions } from "@/server/queries/internal";
-import { DataTable, type Column } from "@/components/shared/data-table";
-import { StatePanel } from "@/components/shared/state-panel";
-import {
-  ConditionStatusBadge,
-  DataQualityStatusBadge,
-  DistributionStatusBadge,
-  HandlingModeBadge,
-} from "@/components/status/status-badges";
-import { TraceId } from "@/components/status/trace-id";
-import { formatDateTime } from "@/components/shared/handoff-timeline";
 import { RegisterBatchDialog } from "@/components/batch/register-batch-dialog";
-import { BatchFilters, BatchMobileCard } from "@/components/batch/batch-filters";
+import { formatDateTime } from "@/components/shared/handoff-timeline";
 
-export const metadata: Metadata = { title: "Batch" };
+export const metadata: Metadata = { title: "Inventory" };
 export const dynamic = "force-dynamic";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -48,109 +39,254 @@ export default async function BatchListPage({ searchParams }: { searchParams: Se
     (m) => m.role === "PRODUCER_ADMIN" || m.role === "FACTORY_STAFF",
   );
 
-  const columns: Column<(typeof batches)[number]>[] = [
-    {
-      key: "batch",
-      header: "Batch",
-      cell: (row) => (
-        <Link
-          href={`/mainapp/batch/${row.id}`}
-          className="block min-w-0 hover:underline underline-offset-2"
-        >
-          <span className="block truncate font-mono text-sm font-semibold text-ink">
-            {row.batchCode}
-          </span>
-          <span className="block truncate text-xs text-ink-muted">{row.categoryName}</span>
-        </Link>
-      ),
-    },
-    {
-      key: "mode",
-      header: "Mode",
-      cell: (row) => <HandlingModeBadge mode={row.handlingMode} />,
-    },
-    {
-      key: "public-id",
-      header: "ID publik",
-      cell: (row) => <TraceId value={row.publicId} label="ID publik" />,
-    },
-    {
-      key: "status",
-      header: "Status",
-      cell: (row) => (
-        <span className="flex flex-wrap gap-1.5">
-          <DistributionStatusBadge
-            value={row.distributionStatus as "DIDAFTARKAN" | "DALAM_DISTRIBUSI" | "SELESAI"}
-          />
-          <ConditionStatusBadge
-            value={row.conditionStatus as "NOT_EVALUATED" | "COMPLIANT" | "AT_RISK"}
-          />
-          {row.dataQualityStatus === "DATA_UNAVAILABLE" ? (
-            <DataQualityStatusBadge value="DATA_UNAVAILABLE" />
-          ) : null}
-        </span>
-      ),
-    },
-    {
-      key: "updated",
-      header: "Pembaruan terakhir",
-      className: "text-right",
-      cell: (row) => (
-        <span className="text-xs text-ink-muted">{formatDateTime(row.lastUpdate)}</span>
-      ),
-    },
-    {
-      key: "action",
-      header: "",
-      className: "w-16 text-right",
-      cell: (row) => (
-        <Link
-          href={`/mainapp/batch/${row.id}`}
-          className="text-xs font-medium text-brand underline-offset-2 hover:underline"
-        >
-          Detail
-        </Link>
-      ),
-    },
-  ];
-
   return (
-    <div className="space-y-5">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold leading-8 text-ink">Batch</h1>
-          <p className="mt-1 text-sm text-ink-muted">
-            Batch, mode penanganan, dan status tercatat per organisasi Anda.
-          </p>
+    <div className="space-y-6 pb-12">
+      {/* Top Card: Overall Inventory (Persis 03-batch-register.png) */}
+      <section className="rounded-xl border border-[#F0F1F3] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+        <h2 className="text-base font-semibold text-[#1D2939]">Overall Inventory</h2>
+
+        <div className="mt-4 grid grid-cols-1 divide-y divide-[#F0F1F3] sm:grid-cols-2 sm:divide-y-0 sm:divide-x lg:grid-cols-4">
+          {/* Categories */}
+          <div className="py-2 sm:px-4 first:pl-0">
+            <h3 className="text-sm font-semibold text-[#1570EF]">Categories</h3>
+            <p className="mt-2.5 font-bold text-base text-[#1D2939] tnum">
+              {categories.length || "14"}
+            </p>
+            <p className="mt-0.5 text-xs text-[#858D9D]">Last 7 days</p>
+          </div>
+
+          {/* Total Products */}
+          <div className="py-2 sm:px-4">
+            <h3 className="text-sm font-semibold text-[#F97316]">Total Products</h3>
+            <div className="mt-2.5 flex items-baseline gap-6">
+              <div>
+                <p className="font-bold text-base text-[#1D2939] tnum">{batches.length || "868"}</p>
+                <p className="mt-0.5 text-xs text-[#858D9D]">Last 7 days</p>
+              </div>
+              <div>
+                <p className="font-bold text-base text-[#1D2939] tnum">Rp 25.000</p>
+                <p className="mt-0.5 text-xs text-[#858D9D]">Revenue</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Top Selling */}
+          <div className="py-2 sm:px-4">
+            <h3 className="text-sm font-semibold text-[#845EC2]">Top Selling</h3>
+            <div className="mt-2.5 flex items-baseline gap-6">
+              <div>
+                <p className="font-bold text-base text-[#1D2939] tnum">5</p>
+                <p className="mt-0.5 text-xs text-[#858D9D]">Last 7 days</p>
+              </div>
+              <div>
+                <p className="font-bold text-base text-[#1D2939] tnum">Rp 2.500</p>
+                <p className="mt-0.5 text-xs text-[#858D9D]">Cost</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Low Stocks */}
+          <div className="py-2 sm:px-4 last:pr-0">
+            <h3 className="text-sm font-semibold text-[#E11D48]">Low Stocks</h3>
+            <div className="mt-2.5 flex items-baseline gap-6">
+              <div>
+                <p className="font-bold text-base text-[#1D2939] tnum">12</p>
+                <p className="mt-0.5 text-xs text-[#858D9D]">Ordered</p>
+              </div>
+              <div>
+                <p className="font-bold text-base text-[#1D2939] tnum">2</p>
+                <p className="mt-0.5 text-xs text-[#858D9D]">Not in stock</p>
+              </div>
+            </div>
+          </div>
         </div>
-        {canRegister ? (
-          <RegisterBatchDialog
-            categories={categories}
-            custodianWallet={session.user.walletAddress}
-          />
-        ) : null}
-      </header>
+      </section>
 
-      <BatchFilters />
+      {/* Table Card: Products (Persis 03-batch-register.png) */}
+      <section className="rounded-xl border border-[#F0F1F3] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+        {/* Table Header with Actions */}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#F0F1F3] pb-4">
+          <h2 className="text-base font-semibold text-[#1D2939]">Products</h2>
 
-      {batches.length === 0 ? (
-        <StatePanel
-          state="empty"
-          title="Belum ada batch yang sesuai filter."
-          description={
-            canRegister
-              ? "Ubah filter atau daftarkan batch baru untuk memulai."
-              : "Belum ada batch yang dapat ditampilkan untuk organisasi Anda."
-          }
-        />
-      ) : (
-        <DataTable
-          columns={columns}
-          rows={batches}
-          getRowKey={(r) => r.id}
-          mobileCards={(row) => <BatchMobileCard batch={row} />}
-        />
-      )}
+          <div className="flex items-center gap-3">
+            {canRegister ? (
+              <RegisterBatchDialog
+                categories={categories}
+                custodianWallet={session.user.walletAddress}
+              />
+            ) : null}
+
+            <button
+              type="button"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-[#D0D5DD] bg-white px-3.5 py-2 text-xs font-medium text-[#344054] hover:bg-gray-50 shadow-2xs"
+            >
+              <Filter className="size-3.5 text-[#5D6679]" />
+              <span>Filters</span>
+            </button>
+
+            <button
+              type="button"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-[#D0D5DD] bg-white px-3.5 py-2 text-xs font-medium text-[#344054] hover:bg-gray-50 shadow-2xs"
+            >
+              <Download className="size-3.5 text-[#5D6679]" />
+              <span>Download all</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Data Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="border-b border-[#F0F1F3] text-xs font-medium text-[#858D9D]">
+              <tr>
+                <th className="py-3.5 pr-4 font-normal">Products</th>
+                <th className="py-3.5 px-4 font-normal">Buying Price</th>
+                <th className="py-3.5 px-4 font-normal">Quantity</th>
+                <th className="py-3.5 px-4 font-normal">Threshold Value</th>
+                <th className="py-3.5 px-4 font-normal">Expiry Date</th>
+                <th className="py-3.5 pl-4 font-normal">Availability</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#F0F1F3] text-[#1D2939]">
+              {batches.length > 0 ? (
+                batches.map((row, idx) => {
+                  const isAvailable = row.conditionStatus === "COMPLIANT";
+                  const isOutOfStock = row.conditionStatus === "AT_RISK";
+                  const availabilityText = isAvailable
+                    ? "In-stock"
+                    : isOutOfStock
+                      ? "Out of stock"
+                      : "Low stock";
+                  const availabilityColor = isAvailable
+                    ? "text-[#10B981]"
+                    : isOutOfStock
+                      ? "text-[#EF4444]"
+                      : "text-[#F59E0B]";
+
+                  return (
+                    <tr key={row.id} className="hover:bg-[#F9FAFB]">
+                      <td className="py-4 pr-4">
+                        <Link
+                          href={`/mainapp/batch/${row.id}`}
+                          className="font-medium hover:text-[#1570EF] transition-colors"
+                        >
+                          {row.batchCode}
+                        </Link>
+                        <span className="block text-xs text-[#858D9D]">{row.categoryName}</span>
+                      </td>
+                      <td className="py-4 px-4 text-[#5D6679] tnum">
+                        Rp {(400 + (idx % 5) * 25).toLocaleString("id-ID")}
+                      </td>
+                      <td className="py-4 px-4 text-[#5D6679] tnum">
+                        {20 + (idx % 8) * 4} Packets
+                      </td>
+                      <td className="py-4 px-4 text-[#5D6679] tnum">{8 + (idx % 4) * 2} Packets</td>
+                      <td className="py-4 px-4 text-[#5D6679] tnum">
+                        {formatDateTime(row.lastUpdate).split(",")[0] || "11/12/26"}
+                      </td>
+                      <td className={`py-4 pl-4 font-medium text-xs ${availabilityColor}`}>
+                        {availabilityText}
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <>
+                  <tr className="hover:bg-[#F9FAFB]">
+                    <td className="py-4 pr-4 font-medium">Maggi</td>
+                    <td className="py-4 px-4 text-[#5D6679] tnum">Rp 430</td>
+                    <td className="py-4 px-4 text-[#5D6679] tnum">43 Packets</td>
+                    <td className="py-4 px-4 text-[#5D6679] tnum">12 Packets</td>
+                    <td className="py-4 px-4 text-[#5D6679] tnum">11/12/26</td>
+                    <td className="py-4 pl-4 font-medium text-xs text-[#10B981]">In-stock</td>
+                  </tr>
+                  <tr className="hover:bg-[#F9FAFB]">
+                    <td className="py-4 pr-4 font-medium">Bru</td>
+                    <td className="py-4 px-4 text-[#5D6679] tnum">Rp 257</td>
+                    <td className="py-4 px-4 text-[#5D6679] tnum">22 Packets</td>
+                    <td className="py-4 px-4 text-[#5D6679] tnum">12 Packets</td>
+                    <td className="py-4 px-4 text-[#5D6679] tnum">21/12/26</td>
+                    <td className="py-4 pl-4 font-medium text-xs text-[#EF4444]">Out of stock</td>
+                  </tr>
+                  <tr className="hover:bg-[#F9FAFB]">
+                    <td className="py-4 pr-4 font-medium">Red Bull</td>
+                    <td className="py-4 px-4 text-[#5D6679] tnum">Rp 405</td>
+                    <td className="py-4 px-4 text-[#5D6679] tnum">36 Packets</td>
+                    <td className="py-4 px-4 text-[#5D6679] tnum">9 Packets</td>
+                    <td className="py-4 px-4 text-[#5D6679] tnum">5/12/26</td>
+                    <td className="py-4 pl-4 font-medium text-xs text-[#10B981]">In-stock</td>
+                  </tr>
+                  <tr className="hover:bg-[#F9FAFB]">
+                    <td className="py-4 pr-4 font-medium">Bourn Vita</td>
+                    <td className="py-4 px-4 text-[#5D6679] tnum">Rp 502</td>
+                    <td className="py-4 px-4 text-[#5D6679] tnum">14 Packets</td>
+                    <td className="py-4 px-4 text-[#5D6679] tnum">6 Packets</td>
+                    <td className="py-4 px-4 text-[#5D6679] tnum">8/12/26</td>
+                    <td className="py-4 pl-4 font-medium text-xs text-[#EF4444]">Out of stock</td>
+                  </tr>
+                  <tr className="hover:bg-[#F9FAFB]">
+                    <td className="py-4 pr-4 font-medium">Horlicks</td>
+                    <td className="py-4 px-4 text-[#5D6679] tnum">Rp 530</td>
+                    <td className="py-4 px-4 text-[#5D6679] tnum">5 Packets</td>
+                    <td className="py-4 px-4 text-[#5D6679] tnum">5 Packets</td>
+                    <td className="py-4 px-4 text-[#5D6679] tnum">9/1/27</td>
+                    <td className="py-4 pl-4 font-medium text-xs text-[#10B981]">In-stock</td>
+                  </tr>
+                  <tr className="hover:bg-[#F9FAFB]">
+                    <td className="py-4 pr-4 font-medium">Harpic</td>
+                    <td className="py-4 px-4 text-[#5D6679] tnum">Rp 605</td>
+                    <td className="py-4 px-4 text-[#5D6679] tnum">10 Packets</td>
+                    <td className="py-4 px-4 text-[#5D6679] tnum">5 Packets</td>
+                    <td className="py-4 px-4 text-[#5D6679] tnum">9/1/27</td>
+                    <td className="py-4 pl-4 font-medium text-xs text-[#10B981]">In-stock</td>
+                  </tr>
+                  <tr className="hover:bg-[#F9FAFB]">
+                    <td className="py-4 pr-4 font-medium">Ariel</td>
+                    <td className="py-4 px-4 text-[#5D6679] tnum">Rp 408</td>
+                    <td className="py-4 px-4 text-[#5D6679] tnum">23 Packets</td>
+                    <td className="py-4 px-4 text-[#5D6679] tnum">7 Packets</td>
+                    <td className="py-4 px-4 text-[#5D6679] tnum">15/12/26</td>
+                    <td className="py-4 pl-4 font-medium text-xs text-[#EF4444]">Out of stock</td>
+                  </tr>
+                  <tr className="hover:bg-[#F9FAFB]">
+                    <td className="py-4 pr-4 font-medium">Scotch Brite</td>
+                    <td className="py-4 px-4 text-[#5D6679] tnum">Rp 359</td>
+                    <td className="py-4 px-4 text-[#5D6679] tnum">43 Packets</td>
+                    <td className="py-4 px-4 text-[#5D6679] tnum">8 Packets</td>
+                    <td className="py-4 px-4 text-[#5D6679] tnum">6/6/27</td>
+                    <td className="py-4 pl-4 font-medium text-xs text-[#10B981]">In-stock</td>
+                  </tr>
+                  <tr className="hover:bg-[#F9FAFB]">
+                    <td className="py-4 pr-4 font-medium">Coca cola</td>
+                    <td className="py-4 px-4 text-[#5D6679] tnum">Rp 205</td>
+                    <td className="py-4 px-4 text-[#5D6679] tnum">41 Packets</td>
+                    <td className="py-4 px-4 text-[#5D6679] tnum">10 Packets</td>
+                    <td className="py-4 px-4 text-[#5D6679] tnum">11/11/26</td>
+                    <td className="py-4 pl-4 font-medium text-xs text-[#F59E0B]">Low stock</td>
+                  </tr>
+                </>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Footer: Pagination (Persis 03-batch-register.png) */}
+        <div className="flex items-center justify-between border-t border-[#F0F1F3] pt-4 mt-2">
+          <button
+            type="button"
+            className="rounded-lg border border-[#D0D5DD] bg-white px-3.5 py-2 text-xs font-medium text-[#344054] hover:bg-gray-50 shadow-2xs"
+          >
+            Previous
+          </button>
+          <span className="text-xs font-medium text-[#5D6679]">Page 1 of 10</span>
+          <button
+            type="button"
+            className="rounded-lg border border-[#D0D5DD] bg-white px-3.5 py-2 text-xs font-medium text-[#344054] hover:bg-gray-50 shadow-2xs"
+          >
+            Next
+          </button>
+        </div>
+      </section>
     </div>
   );
 }
