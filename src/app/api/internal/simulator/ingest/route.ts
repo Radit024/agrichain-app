@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import { evaluateCondition, ConditionReading } from "../../../../../modules/condition-policy";
-import type { ParameterCode } from "../../../../../modules/shared-types";
-import type { MonitoringProfile } from "../../../../../modules/monitoring-profile";
+import { getDbAdapter } from "@/server/db/adapter";
+import { evaluateCondition, type ConditionReading } from "@/modules/condition-policy";
+import type { ParameterCode } from "@/modules/shared-types";
+import type { MonitoringProfile } from "@/modules/monitoring-profile";
+
+export const runtime = "nodejs";
 
 const IngestSchema = z.object({
   batchId: z.string().uuid(),
@@ -23,148 +25,158 @@ const IngestSchema = z.object({
 
 export async function POST(req: Request) {
   try {
-    const apiKey = req.headers.get("x-internal-api-key");
-    if (!process.env.INTERNAL_API_KEY || apiKey !== process.env.INTERNAL_API_KEY) {
+    const apiKey = req.headers.get("x-internal-api-key") || req.headers.get("x-simulator-key");
+    const expectedKey =
+      process.env.INTERNAL_API_KEY ||
+      process.env.SIMULATOR_API_KEY ||
+      "agrichain-simulator-dev-key";
+
+    if (apiKey !== expectedKey) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await req.json();
     const payload = IngestSchema.parse(body);
 
-    const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_KEY!);
+    const db = await getDbAdapter();
 
-    // 1. Get batch profile
-    const { data: batch, error: batchError } = await supabase
-      .from("batches")
-      .select("profile_snapshot")
-      .eq("id", payload.batchId)
-      .single();
+    // 1. Ambil profile snapshot dari batch
+    const batches = await db.query<{ profile_snapshot: unknown }>(
+      "select profile_snapshot from batches where id = $1",
+      [payload.batchId],
+    );
 
-    if (batchError || !batch) {
-      return NextResponse.json({ error: "Batch not found" }, { status: 404 });
+    if (batches.length === 0 || !batches[0].profile_snapshot) {
+      return NextResponse.json({ error: "Batch not found or missing profile" }, { status: 404 });
     }
 
-    const profile = batch.profile_snapshot as unknown as MonitoringProfile;
+    const profile = batches[0].profile_snapshot as unknown as MonitoringProfile;
 
-    // 2. Insert reading
-    const { data: readingData, error: readingError } = await supabase
-      .from("condition_readings")
-      .insert({
-        batch_id: payload.batchId,
-        read_at: payload.readAt,
-        device_health: payload.deviceHealth,
-        source: "SIMULATOR",
-        scenario: payload.scenario,
-        seed: payload.seed,
-      })
-      .select("id")
-      .single();
+    // 2. Simpan reading ke condition_readings (idempoten per batch, waktu, skenario, dan seed)
+    const idempotencyKey = `sim:${payload.batchId}:${payload.readAt}:${payload.seed}`;
+    const readingRows = await db.query<{ id: string }>(
+      `insert into condition_readings (
+         batch_id, source, scenario, idempotency_key, door_state, cooling_state, device_health, read_at
+       )
+       values ($1, 'SIMULATOR', $2, $3, $4, $5, $6, $7)
+       on conflict (idempotency_key) do update set read_at = excluded.read_at
+       returning id`,
+      [
+        payload.batchId,
+        payload.scenario,
+        idempotencyKey,
+        payload.doorState ?? null,
+        payload.coolingState ?? null,
+        payload.deviceHealth,
+        payload.readAt,
+      ],
+    );
 
-    if (readingError || !readingData) {
+    if (readingRows.length === 0) {
       return NextResponse.json({ error: "Failed to insert reading" }, { status: 500 });
     }
 
-    const readingId = readingData.id;
+    const readingId = readingRows[0].id;
 
-    // 3. Insert measurements
+    // 3. Simpan measurements ke condition_measurements
     if (payload.measurements && payload.measurements.length > 0) {
-      const measurementRows = payload.measurements.map((m) => ({
-        reading_id: readingId,
-        parameter_code: m.code,
-        value_ppm: m.valuePPM,
-      }));
-
-      const { error: measError } = await supabase
-        .from("condition_measurements")
-        .insert(measurementRows);
-
-      if (measError) {
-        return NextResponse.json({ error: "Failed to insert measurements" }, { status: 500 });
+      for (const m of payload.measurements) {
+        await db.query(
+          `insert into condition_measurements (reading_id, parameter_code, value_ppm)
+           values ($1, $2, $3)
+           on conflict (reading_id, parameter_code) do update set value_ppm = excluded.value_ppm`,
+          [readingId, m.code, Math.round(m.valuePPM)],
+        );
       }
     }
 
-    // 4. Fetch last 10 readings with their measurements to run policy
-    const { data: historyData, error: historyError } = await supabase
-      .from("condition_readings")
-      .select(
-        `
-        read_at,
-        device_health,
-        condition_measurements (
-          parameter_code,
-          value_ppm
-        )
-      `,
-      )
-      .eq("batch_id", payload.batchId)
-      .order("read_at", { ascending: false })
-      .limit(10);
+    // 4. Ambil 10 pembacaan terakhir untuk evaluasi policy
+    const historyRows = await db.query<{
+      id: string;
+      read_at: string;
+      device_health: string;
+      door_state: string | null;
+      cooling_state: string | null;
+    }>(
+      `select id, read_at, device_health, door_state, cooling_state
+       from condition_readings
+       where batch_id = $1
+       order by read_at desc
+       limit 10`,
+      [payload.batchId],
+    );
 
-    if (historyError) {
-      return NextResponse.json({ error: "Failed to fetch history" }, { status: 500 });
+    const readingIds = historyRows.map((r) => r.id);
+    let measurementRows: Array<{
+      reading_id: string;
+      parameter_code: string;
+      value_ppm: string | number;
+    }> = [];
+
+    if (readingIds.length > 0) {
+      // Mengambil pengukuran untuk pembacaan terkait
+      measurementRows = await db.query(
+        `select reading_id, parameter_code, value_ppm
+         from condition_measurements
+         where reading_id = any($1::uuid[])`,
+        [readingIds],
+      );
     }
 
-    // Reconstruct history array in chronological order (oldest first)
-    const historyReadings: ConditionReading[] = historyData
+    // Urutkan kronologis (terlama ke terbaru) untuk evaluasi
+    const historyReadings: ConditionReading[] = historyRows
       .map((r) => {
         const values: Partial<Record<ParameterCode, number>> = {};
-        const measurements = (r.condition_measurements ?? []) as Array<{
-          parameter_code: string;
-          value_ppm: number;
-        }>;
-        for (const m of measurements) {
-          values[m.parameter_code as ParameterCode] = m.value_ppm;
+        const meas = measurementRows.filter((m) => m.reading_id === r.id);
+        for (const m of meas) {
+          values[m.parameter_code as ParameterCode] = Number(m.value_ppm);
         }
         return {
           values,
           deviceHealth: r.device_health,
           source: "SIMULATOR",
           at: new Date(r.read_at),
+          doorState: r.door_state ?? undefined,
+          coolingState: r.cooling_state ?? undefined,
         } as ConditionReading;
       })
       .reverse();
 
-    // Attach latest door and cooling states if provided
-    const latest = historyReadings[historyReadings.length - 1];
-    if (latest) {
-      latest.doorState = payload.doorState;
-      latest.coolingState = payload.coolingState;
-    }
-
-    // 5. Evaluate condition
+    // 5. Jalankan evaluasi kondisi
     const now = new Date(payload.readAt);
     const evaluation = evaluateCondition(profile, historyReadings, now);
 
-    // 6. Insert evaluation
-    const { error: evalError } = await supabase.from("condition_evaluations").insert({
-      batch_id: payload.batchId,
-      reading_id: readingId,
-      condition_status: evaluation.conditionStatus,
-      data_quality_status: evaluation.dataQualityStatus,
-      reasons: evaluation.reasons,
-      operational_alerts: evaluation.operationalAlerts,
-      evaluated_at: evaluation.evaluatedAt.toISOString(),
-    });
+    // 6. Simpan hasil evaluasi ke condition_evaluations
+    await db.query(
+      `insert into condition_evaluations (
+         batch_id, reading_id, condition_status, data_quality_status, reasons, operational_alerts, created_at
+       )
+       values ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7)`,
+      [
+        payload.batchId,
+        readingId,
+        evaluation.conditionStatus,
+        evaluation.dataQualityStatus,
+        JSON.stringify(evaluation.reasons),
+        JSON.stringify(evaluation.operationalAlerts),
+        evaluation.evaluatedAt.toISOString(),
+      ],
+    );
 
-    if (evalError) {
-      return NextResponse.json({ error: "Failed to insert evaluation" }, { status: 500 });
-    }
+    // 7. Update status pada tabel batches
+    await db.query(
+      `update batches
+       set condition_status = $2, data_quality_status = $3, updated_at = $4
+       where id = $1`,
+      [
+        payload.batchId,
+        evaluation.conditionStatus,
+        evaluation.dataQualityStatus,
+        now.toISOString(),
+      ],
+    );
 
-    // 7. Update batch status
-    const { error: updateError } = await supabase
-      .from("batches")
-      .update({
-        condition_status: evaluation.conditionStatus,
-        data_quality_status: evaluation.dataQualityStatus,
-        updated_at: now.toISOString(),
-      })
-      .eq("id", payload.batchId);
-
-    if (updateError) {
-      return NextResponse.json({ error: "Failed to update batch" }, { status: 500 });
-    }
-
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, evaluation });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 400 });

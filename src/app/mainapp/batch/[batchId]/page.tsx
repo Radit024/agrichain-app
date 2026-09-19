@@ -21,9 +21,9 @@ import {
   formatDateTime,
   formatPPMDisplay,
 } from "@/components/shared/handoff-timeline";
-import { ComplianceCard, parameterLabel } from "@/components/shared/compliance-card";
 import { StatePanel } from "@/components/shared/state-panel";
-import { QrDownloadButton } from "@/components/batch/qr-download-button";
+import { ComplianceCard, parameterLabel } from "@/components/shared/compliance-card";
+import { QrDownloadButton, PrintPackagingLabelButton } from "@/components/batch/qr-download-button";
 import { BatchTelemetryChart } from "@/components/shared/trend-charts";
 import { StaggerContainer, StaggerItem, MotionCard } from "@/components/motion/motion-container";
 
@@ -75,7 +75,14 @@ export default async function BatchDetailPage({
             </div>
 
             <div className="flex flex-col items-end gap-2">
-              <QrDownloadButton publicId={batch.publicId} batchCode={batch.batchCode} />
+              <div className="flex items-center gap-2">
+                <PrintPackagingLabelButton
+                  publicId={batch.publicId}
+                  batchCode={batch.batchCode}
+                  categoryName={batch.categoryName}
+                />
+                <QrDownloadButton publicId={batch.publicId} batchCode={batch.batchCode} />
+              </div>
               <Link
                 href={`/p/${batch.publicId}`}
                 className="inline-flex items-center gap-1.5 text-xs font-medium text-brand underline-offset-2 hover:underline"

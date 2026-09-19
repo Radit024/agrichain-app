@@ -31,6 +31,15 @@ const codeLabels: Record<string, string> = {
   CHECKPOINT_ID: "Titik distribusi",
 };
 
+function formatTolerance(seconds: number): string {
+  if (seconds >= 60) {
+    const mins = Math.floor(seconds / 60);
+    const remSec = seconds % 60;
+    return remSec > 0 ? `${mins} mnt ${remSec} dtk` : `${mins} menit`;
+  }
+  return `${seconds} detik`;
+}
+
 export function parameterLabel(code: string): string {
   return codeLabels[code] ?? code;
 }
@@ -90,7 +99,9 @@ export function ComplianceCard({
                       </dt>
                       <dd className="text-xs text-ink-muted">
                         {rangeLabel(rule)}
-                        {rule.toleranceSeconds ? ` · toleransi ${rule.toleranceSeconds}s` : ""}
+                        {rule.toleranceSeconds
+                          ? ` · toleransi ${formatTolerance(rule.toleranceSeconds)}`
+                          : ""}
                       </dd>
                     </div>
                     <dd className="tnum text-right text-sm font-semibold text-ink">

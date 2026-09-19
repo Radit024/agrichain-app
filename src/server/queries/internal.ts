@@ -20,6 +20,14 @@ export interface DashboardMetrics {
   sahAttempts: number;
   tidakSahAttempts: number;
   anomaliAttempts: number;
+  pendingIncomingHandoffsCount?: number;
+  pendingIncomingItems?: Array<{
+    batchId: string;
+    batchCode: string;
+    senderOrg: string;
+    fromStage: number;
+    initiatedAt: string;
+  }>;
   attentionBatches: AttentionBatch[];
   conditionAlerts: ConditionAlert[];
   conditionTrend: Array<{ day: string; compliant: number; atRisk: number }>;
@@ -195,6 +203,27 @@ export async function getDashboardMetrics(
   );
   const pc = pointCounts[0] ?? { total: 0, active: 0 };
 
+  const incoming = await db.query<{
+    batch_id: string;
+    batch_code: string;
+    sender_org: string;
+    from_stage: number;
+    initiated_at: string;
+  }>(
+    `select b.id as batch_id, b.batch_code, so.name as sender_org, i.from_stage, i.initiated_at
+     from handoff_intents i
+     join batches b on b.id = i.batch_id
+     join orgs so on so.id = b.org_id
+     where i.recipient_org_id = any($1::uuid[]) and i.status = 'PENDING' and i.expires_at > now()
+     order by i.initiated_at desc limit 3`,
+    [orgIds],
+  );
+  const incomingCount = await db.query<{ n: number }>(
+    `select count(*)::int as n from handoff_intents
+     where recipient_org_id = any($1::uuid[]) and status = 'PENDING' and expires_at > now()`,
+    [orgIds],
+  );
+
   return {
     activeBatches: c.active_batches,
     awaitingReception: c.awaiting_reception,
@@ -207,6 +236,14 @@ export async function getDashboardMetrics(
     sahAttempts: at.sah,
     tidakSahAttempts: at.tidak_sah,
     anomaliAttempts: at.anomali,
+    pendingIncomingHandoffsCount: incomingCount[0]?.n || 0,
+    pendingIncomingItems: incoming.map((r) => ({
+      batchId: r.batch_id,
+      batchCode: r.batch_code,
+      senderOrg: r.sender_org,
+      fromStage: r.from_stage,
+      initiatedAt: r.initiated_at,
+    })),
     attentionBatches: attention.map((r) => ({
       id: r.id,
       batchCode: r.batch_code,
@@ -614,11 +651,16 @@ export interface HandoffListItem {
   expiresAt: string;
   isRecipient: boolean;
   isSender: boolean;
+  canConfirm: boolean;
+  canCancel: boolean;
 }
 
 export async function listHandoffs(db: DbAdapter, session: Session): Promise<HandoffListItem[]> {
   const orgIds = session.memberships.map((m) => m.orgId);
   if (orgIds.length === 0) return [];
+  const roles = session.memberships.map((m) => m.role);
+  const myWallet = (session.user.walletAddress ?? "").toLowerCase();
+
   const rows = await db.query<{
     id: string;
     batch_id: string;
@@ -627,6 +669,8 @@ export async function listHandoffs(db: DbAdapter, session: Session): Promise<Han
     to_stage: number;
     sender_org: string;
     recipient_org: string;
+    sender_org_id: string;
+    recipient_org_id: string;
     status: string;
     initiated_at: string;
     confirmed_at: string | null;
@@ -636,48 +680,73 @@ export async function listHandoffs(db: DbAdapter, session: Session): Promise<Han
   }>(
     `select i.id, i.batch_id, b.batch_code, i.from_stage, i.to_stage,
             so.name as sender_org, ro.name as recipient_org,
+            b.org_id as sender_org_id, i.recipient_org_id,
             i.status, i.initiated_at, i.confirmed_at, i.expires_at,
             i.sender_wallet, i.recipient_wallet
      from handoff_intents i
      join batches b on b.id = i.batch_id
      join orgs so on so.id = b.org_id
      join orgs ro on ro.id = i.recipient_org_id
-     where b.org_id = any($1::uuid[]) or i.recipient_org_id = any($1::uuid[])
+     where b.org_id = any($1::uuid[]) or i.recipient_org_id = any($1::uuid[]) or b.custodian_org_id = any($1::uuid[])
      order by i.initiated_at desc limit 100`,
     [orgIds],
   );
-  const myWallet = (session.user.walletAddress ?? "").toLowerCase();
-  return rows.map((r) => ({
-    intentId: r.id,
-    batchId: r.batch_id,
-    batchCode: r.batch_code,
-    fromStage: r.from_stage,
-    toStage: r.to_stage,
-    senderOrgName: r.sender_org,
-    recipientOrgName: r.recipient_org,
-    status: r.status,
-    initiatedAt: r.initiated_at,
-    confirmedAt: r.confirmed_at,
-    expiresAt: r.expires_at,
-    isRecipient: r.recipient_wallet.toLowerCase() === myWallet && r.status === "PENDING",
-    isSender: r.sender_wallet.toLowerCase() === myWallet && r.status === "PENDING",
-  }));
+
+  return rows.map((r) => {
+    const isPending = r.status === "PENDING";
+    const isRecipientOrg = orgIds.includes(r.recipient_org_id);
+    const isSenderOrg = orgIds.includes(r.sender_org_id);
+    const hasRecipientRole =
+      (r.to_stage === 1 && roles.includes("DISTRIBUTOR_ADMIN")) ||
+      (r.to_stage === 2 && roles.includes("RETAILER_ADMIN"));
+    const hasSenderRole =
+      (r.from_stage === 0 &&
+        (roles.includes("PRODUCER_ADMIN") || roles.includes("FACTORY_STAFF"))) ||
+      (r.from_stage === 1 && roles.includes("DISTRIBUTOR_ADMIN"));
+
+    const canConfirm =
+      isPending &&
+      (isRecipientOrg || r.recipient_wallet.toLowerCase() === myWallet) &&
+      hasRecipientRole;
+    const canCancel =
+      isPending && (isSenderOrg || r.sender_wallet.toLowerCase() === myWallet) && hasSenderRole;
+
+    return {
+      intentId: r.id,
+      batchId: r.batch_id,
+      batchCode: r.batch_code,
+      fromStage: r.from_stage,
+      toStage: r.to_stage,
+      senderOrgName: r.sender_org,
+      recipientOrgName: r.recipient_org,
+      status: r.status,
+      initiatedAt: r.initiated_at,
+      confirmedAt: r.confirmed_at,
+      expiresAt: r.expires_at,
+      isRecipient: canConfirm,
+      isSender: canCancel,
+      canConfirm,
+      canCancel,
+    };
+  });
 }
 
-/** Batch yang bisa diinisiasi handoff (kustodian = user, stage < 2). */
+/** Batch yang bisa diinisiasi handoff (kustodian org = user org, stage < 2). */
 export async function listHandoffableBatches(
   db: DbAdapter,
   session: Session,
 ): Promise<Array<{ id: string; batchCode: string; custodyStage: number }>> {
   const wallet = session.user.walletAddress;
   if (!wallet) return [];
+  const orgIds = session.memberships.map((m) => m.orgId);
   const rows = await db.query<{ id: string; batch_code: string; custody_stage: number }>(
     `select b.id, b.batch_code, b.custody_stage
      from batches b
-     where b.custodian_wallet = $1 and b.custody_stage < 2 and b.paused = false
+     where (b.custodian_wallet = $1 or b.custodian_org_id = any($2::uuid[]) or (b.custody_stage = 0 and b.org_id = any($2::uuid[])))
+       and b.custody_stage < 2 and b.paused = false
        and not exists (select 1 from handoff_intents i
             where i.batch_id = b.id and i.status = 'PENDING')`,
-    [wallet],
+    [wallet, orgIds],
   );
   return rows.map((r) => ({
     id: r.id,
@@ -712,18 +781,75 @@ export async function listPendingConfirmations(
   }));
 }
 
-/** Org tujuan untuk handoff dari stage tertentu. */
+export interface RecipientContact {
+  userId: string;
+  name: string;
+  email: string;
+  role: string;
+  walletAddress: string;
+}
+
+export interface RecipientOrgOption {
+  id: string;
+  name: string;
+  defaultWallet: string;
+  contacts: RecipientContact[];
+}
+
+/** Org tujuan untuk handoff dari stage tertentu beserta daftar kontak berwenang. */
 export async function listRecipientOrgOptions(
   db: DbAdapter,
   fromStage: number,
-): Promise<Array<{ id: string; name: string }>> {
+): Promise<RecipientOrgOption[]> {
   // stage 0 → distributor; stage 1 → retailer
   const kind = fromStage === 0 ? "DISTRIBUTOR" : "RETAILER";
-  const rows = await db.query<{ id: string; name: string }>(
-    "select id, name from orgs where kind = $1 order by name",
+  const rows = await db.query<{
+    org_id: string;
+    org_name: string;
+    user_id: string | null;
+    display_name: string | null;
+    email: string | null;
+    wallet_address: string | null;
+    role: string | null;
+  }>(
+    `select o.id as org_id, o.name as org_name,
+            u.id as user_id, u.display_name, u.email, u.wallet_address, m.role
+     from orgs o
+     left join memberships m on m.org_id = o.id
+     left join app_users u on u.id = m.user_id and u.status = 'ACTIVE'
+     where o.kind = $1
+     order by o.name, u.display_name`,
     [kind],
   );
-  return rows;
+
+  const orgMap = new Map<string, RecipientOrgOption>();
+  for (const r of rows) {
+    let org = orgMap.get(r.org_id);
+    if (!org) {
+      org = {
+        id: r.org_id,
+        name: r.org_name,
+        defaultWallet: "",
+        contacts: [],
+      };
+      orgMap.set(r.org_id, org);
+    }
+    if (r.user_id && r.wallet_address) {
+      const contact: RecipientContact = {
+        userId: r.user_id,
+        name: r.display_name || r.email || "Petugas Terotorisasi",
+        email: r.email || "",
+        role: r.role || "",
+        walletAddress: r.wallet_address,
+      };
+      org.contacts.push(contact);
+      if (!org.defaultWallet) {
+        org.defaultWallet = r.wallet_address;
+      }
+    }
+  }
+
+  return Array.from(orgMap.values());
 }
 
 /* ------------------------------------------------------------------ */

@@ -1,5 +1,5 @@
 import type { ParameterCode } from "../../../modules/shared-types";
-import { computeSeed, seededFloat } from "../seed";
+import { computeSeed, seededFloat } from "../seed.ts";
 
 export type ScenarioName =
   "NORMAL" | "AT_BOUNDARY" | "DOOR_OPEN" | "COOLING_FAILURE" | "RECOVERY" | "SENSOR_OFFLINE";

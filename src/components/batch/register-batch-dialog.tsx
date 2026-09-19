@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Sparkles, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,9 +31,9 @@ export interface CategoryOption {
 }
 
 /**
- * Dialog Daftarkan Batch (DESIGN.md: modal 500px — identitas batch,
- * produk/kategori+profil, jumlah). Snapshot profil diambil otomatis
- * dari profil yang dipilih.
+ * Dialog Daftarkan Batch:
+ * - Auto-generate kode batch
+ * - Auto-select profil sensor sesuai kategori terpilih
  */
 export function RegisterBatchDialog({
   categories,
@@ -54,6 +54,22 @@ export function RegisterBatchDialog({
     () => categories.find((c) => c.categoryId === categoryId),
     [categories, categoryId],
   );
+
+  function generateAutoBatchCode() {
+    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+    const year = new Date().getFullYear();
+    setBatchCode(`BATCH-${year}-${randomSuffix}`);
+  }
+
+  function handleCategoryChange(catId: string) {
+    setCategoryId(catId);
+    const cat = categories.find((c) => c.categoryId === catId);
+    if (cat && cat.profiles.length > 0) {
+      setProfileId(cat.profiles[cat.profiles.length - 1].profileId);
+    } else {
+      setProfileId("");
+    }
+  }
 
   function submit() {
     setError(null);
@@ -100,19 +116,32 @@ export function RegisterBatchDialog({
 
           <div className="space-y-4 pt-1">
             <div className="space-y-1.5">
-              <Label htmlFor="batch-code" className="text-xs font-semibold text-[#344054]">
-                Kode Batch <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="batch-code"
-                value={batchCode}
-                onChange={(e) => setBatchCode(e.target.value.toUpperCase())}
-                placeholder="Contoh: BATCH-2026-0008"
-                className="h-9.5 rounded-lg border-[#D0D5DD] font-mono"
-                aria-required
-              />
+              <div className="flex items-center justify-between">
+                <Label htmlFor="batch-code" className="text-xs font-semibold text-[#344054]">
+                  Kode Batch <span className="text-red-500">*</span>
+                </Label>
+                <button
+                  type="button"
+                  onClick={generateAutoBatchCode}
+                  className="inline-flex items-center gap-1 text-[11px] font-medium text-[#1570EF] hover:underline cursor-pointer"
+                >
+                  <Sparkles className="size-3" />
+                  Buat Otomatis
+                </button>
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  id="batch-code"
+                  value={batchCode}
+                  onChange={(e) => setBatchCode(e.target.value.toUpperCase())}
+                  placeholder="Contoh: BATCH-2026-0008"
+                  className="h-9.5 rounded-lg border-[#D0D5DD] font-mono text-xs"
+                  aria-required
+                />
+              </div>
               <p className="text-[11px] text-[#858D9D]">
-                Gunakan kombinasi huruf besar, angka, dan tanda strip.
+                Masukkan kode unik atau klik &quot;Buat Otomatis&quot; untuk menghasilkan kode
+                standar.
               </p>
             </div>
 
@@ -120,22 +149,16 @@ export function RegisterBatchDialog({
               <Label htmlFor="batch-category" className="text-xs font-semibold text-[#344054]">
                 Kategori Produk <span className="text-red-500">*</span>
               </Label>
-              <Select
-                value={categoryId}
-                onValueChange={(v) => {
-                  setCategoryId(v ?? "");
-                  setProfileId("");
-                }}
-              >
+              <Select value={categoryId} onValueChange={(v) => handleCategoryChange(v ?? "")}>
                 <SelectTrigger
                   id="batch-category"
-                  className="h-9.5 w-full rounded-lg border-[#D0D5DD]"
+                  className="h-9.5 w-full rounded-lg border-[#D0D5DD] text-xs"
                 >
                   <SelectValue placeholder="Pilih kategori produk" />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((c) => (
-                    <SelectItem key={c.categoryId} value={c.categoryId}>
+                    <SelectItem key={c.categoryId} value={c.categoryId} className="text-xs">
                       {c.categoryName} (
                       {c.handlingMode === "COLD_CHAIN" ? "Cold Chain" : "Non-Cold Chain"})
                     </SelectItem>
@@ -144,48 +167,45 @@ export function RegisterBatchDialog({
               </Select>
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="batch-profile" className="text-xs font-semibold text-[#344054]">
-                Profil Pemantauan Kondisi <span className="text-red-500">*</span>
-              </Label>
-              <Select
-                value={profileId}
-                onValueChange={(v) => setProfileId(v ?? "")}
-                disabled={!selectedCategory}
-              >
-                <SelectTrigger
-                  id="batch-profile"
-                  className="h-9.5 w-full rounded-lg border-[#D0D5DD]"
-                >
-                  <SelectValue
-                    placeholder={
-                      selectedCategory
-                        ? "Pilih versi profil"
-                        : "Pilih kategori produk terlebih dahulu"
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {selectedCategory?.profiles.map((p) => (
-                    <SelectItem key={p.profileId} value={p.profileId}>
-                      Versi {p.version} (
-                      {selectedCategory.handlingMode === "COLD_CHAIN"
-                        ? "Kontrol Suhu & Pendingin"
-                        : "Monitoring Umum"}
-                      )
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {selectedCategory ? (
-                <p className="text-[11px] text-[#858D9D]">
-                  Mode penanganan:{" "}
-                  <span className="font-semibold text-[#1570EF]">
-                    {selectedCategory.handlingMode}
+            {selectedCategory ? (
+              <div className="rounded-lg border border-[#D1FADF] bg-[#F6FEF9] p-3 text-xs text-[#027A48] space-y-1.5">
+                <div className="flex items-center justify-between font-medium">
+                  <div className="flex items-center gap-1.5">
+                    <CheckCircle2 className="size-4 text-[#12B76A]" />
+                    <span>Profil Sensor Otomatis Terpilih</span>
+                  </div>
+                  <span className="rounded bg-[#ECFDF3] px-2 py-0.5 text-[10px] font-semibold text-[#027A48]">
+                    {selectedCategory.handlingMode === "COLD_CHAIN" ? "Cold Chain" : "Standar"}
                   </span>
+                </div>
+                <p className="text-[11px] text-[#05603A]">
+                  Batas toleransi suhu dan kualitas data disesuaikan otomatis dengan standar
+                  kategori <span className="font-semibold">{selectedCategory.categoryName}</span>.
                 </p>
-              ) : null}
-            </div>
+
+                {selectedCategory.profiles.length > 1 && (
+                  <details className="mt-1 text-[11px] text-[#05603A]/75 cursor-pointer">
+                    <summary className="hover:underline">
+                      Pilih versi profil manual (lanjutan)
+                    </summary>
+                    <div className="pt-2">
+                      <Select value={profileId} onValueChange={(v) => setProfileId(v ?? "")}>
+                        <SelectTrigger className="h-8 text-xs bg-white text-[#344054]">
+                          <SelectValue placeholder="Pilih versi" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {selectedCategory.profiles.map((p) => (
+                            <SelectItem key={p.profileId} value={p.profileId} className="text-xs">
+                              Versi {p.version}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </details>
+                )}
+              </div>
+            ) : null}
 
             {error ? (
               <p

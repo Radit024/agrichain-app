@@ -3,14 +3,23 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
-import { Home, Boxes, Truck, MapPin, FileBarChart2, Settings, LogOut } from "lucide-react";
+import {
+  Home,
+  Boxes,
+  Truck,
+  MapPin,
+  FileBarChart2,
+  Settings,
+  LogOut,
+  ShieldCheck,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "motion/react";
 import { HexagonBrandLogo, BrandWordmark } from "@/components/brand/brand-logo";
 
 /**
  * Sidebar operasional ketertelusuran rantai pasok pangan:
- * - Menu: Dashboard, Batch, Serah-terima, Titik Distribusi, Laporan
+ * - Menu: Dashboard, Batch, Serah-terima, Titik Distribusi, Verifikasi Akses, Laporan
  * - Bawah: Pengaturan, Keluar
  */
 
@@ -19,6 +28,7 @@ const navItems = [
   { href: "/mainapp/batch", label: "Batch", icon: Boxes },
   { href: "/mainapp/serah-terima", label: "Serah-terima", icon: Truck },
   { href: "/mainapp/titik-distribusi", label: "Titik Distribusi", icon: MapPin },
+  { href: "/mainapp/verifikasi", label: "Verifikasi Akses", icon: ShieldCheck },
   { href: "/mainapp/laporan", label: "Laporan", icon: FileBarChart2 },
 ] as const;
 

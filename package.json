@@ -11,7 +11,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "seed": "node --experimental-strip-types --no-warnings supabase/seed.ts",
-    "simulator": "node --experimental-strip-types --no-warnings src/workers/simulator/index.ts",
+    "simulator": "node --env-file=.env --experimental-strip-types --no-warnings src/workers/simulator/index.ts",
     "reconcile": "node --experimental-strip-types --no-warnings src/workers/reconcile/index.ts",
     "prepare": "husky"
   },

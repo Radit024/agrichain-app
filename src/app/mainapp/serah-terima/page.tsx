@@ -5,7 +5,11 @@ import { Filter, History } from "lucide-react";
 import { APP_SESSION_COOKIE, readAppSession } from "@/server/auth/app-session";
 import { getDbAdapter } from "@/server/db/adapter";
 import { listHandoffs, listHandoffableBatches } from "@/server/queries/internal";
-import { InitiateHandoffDialog } from "@/components/handoff/handoff-dialogs";
+import {
+  InitiateHandoffDialog,
+  ConfirmHandoffButton,
+  CancelHandoffButton,
+} from "@/components/handoff/handoff-dialogs";
 import { formatDateTime } from "@/components/shared/handoff-timeline";
 import {
   HandoffIntentBadge,
@@ -42,26 +46,26 @@ export default async function HandoffPage() {
           <h2 className="text-base font-semibold text-[#1D2939]">Ringkasan Serah-terima</h2>
           <div className="mt-4 grid grid-cols-1 divide-y divide-[#F0F1F3] sm:grid-cols-2 sm:divide-y-0 sm:divide-x lg:grid-cols-4">
             <div className="py-2 sm:px-4 first:pl-0">
-              <h3 className="text-sm font-semibold text-[#1570EF]">Total Intent</h3>
+              <h3 className="text-sm font-semibold text-[#1570EF]">Total Pengiriman</h3>
               <p className="mt-2.5 font-bold text-base text-[#1D2939] tnum">{intents.length}</p>
               <p className="mt-0.5 text-xs text-[#858D9D]">Semua status</p>
             </div>
             <div className="py-2 sm:px-4">
-              <h3 className="text-sm font-semibold text-[#F97316]">Menunggu</h3>
+              <h3 className="text-sm font-semibold text-[#F97316]">Menunggu Penerimaan</h3>
               <p className="mt-2.5 font-bold text-base text-[#1D2939] tnum">
                 {intents.filter((i) => i.status === "PENDING").length}
               </p>
-              <p className="mt-0.5 text-xs text-[#858D9D]">Belum dikonfirmasi</p>
+              <p className="mt-0.5 text-xs text-[#858D9D]">Perlu konfirmasi mitra</p>
             </div>
             <div className="py-2 sm:px-4">
-              <h3 className="text-sm font-semibold text-[#10B981]">Dikonfirmasi</h3>
+              <h3 className="text-sm font-semibold text-[#10B981]">Dikonfirmasi Selesai</h3>
               <p className="mt-2.5 font-bold text-base text-[#1D2939] tnum">
                 {intents.filter((i) => i.status === "CONFIRMED").length}
               </p>
-              <p className="mt-0.5 text-xs text-[#858D9D]">Selesai</p>
+              <p className="mt-0.5 text-xs text-[#858D9D]">Telah diterima fisik</p>
             </div>
             <div className="py-2 sm:px-4 last:pr-0">
-              <h3 className="text-sm font-semibold text-[#EF4444]">Dibatalkan</h3>
+              <h3 className="text-sm font-semibold text-[#EF4444]">Dibatalkan / Kedaluwarsa</h3>
               <p className="mt-2.5 font-bold text-base text-[#1D2939] tnum">
                 {intents.filter((i) => i.status === "CANCELLED" || i.status === "EXPIRED").length}
               </p>
@@ -71,7 +75,7 @@ export default async function HandoffPage() {
         </MotionCard>
       </StaggerItem>
 
-      {/* Table Card: Orders (Persis 07-handoffs.png) */}
+      {/* Table Card: Orders */}
       <StaggerItem>
         <MotionCard
           hoverLift={false}
@@ -79,7 +83,14 @@ export default async function HandoffPage() {
         >
           {/* Table Header with Actions */}
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#F0F1F3] pb-4">
-            <h2 className="text-base font-semibold text-[#1D2939]">Daftar Serah-terima</h2>
+            <div>
+              <h2 className="text-base font-semibold text-[#1D2939]">
+                Daftar Pengiriman & Serah-terima
+              </h2>
+              <p className="text-xs text-[#858D9D] mt-0.5">
+                Pantau pengiriman keluar dan konfirmasi kiriman yang tiba di fasilitas Anda.
+              </p>
+            </div>
 
             <div className="flex items-center gap-3">
               <InitiateHandoffDialog batches={handoffable} />
@@ -117,7 +128,7 @@ export default async function HandoffPage() {
                   Asal → Tujuan
                 </TableHead>
                 <TableHead className="py-3.5 px-4 font-normal text-xs text-[#858D9D]">
-                  Stage
+                  Rute Pengiriman
                 </TableHead>
                 <TableHead className="py-3.5 px-4 font-normal text-xs text-[#858D9D]">
                   Status
@@ -125,8 +136,11 @@ export default async function HandoffPage() {
                 <TableHead className="py-3.5 px-4 font-normal text-xs text-[#858D9D]">
                   Kedaluwarsa
                 </TableHead>
-                <TableHead className="py-3.5 pl-4 font-normal text-xs text-[#858D9D]">
+                <TableHead className="py-3.5 px-4 font-normal text-xs text-[#858D9D]">
                   Dibuat
+                </TableHead>
+                <TableHead className="py-3.5 pl-4 font-normal text-xs text-[#858D9D] text-right">
+                  Aksi Operasional
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -161,17 +175,26 @@ export default async function HandoffPage() {
                       <TableCell className="py-4 px-4 text-xs text-[#5D6679] tnum">
                         {formatDateTime(r.expiresAt)}
                       </TableCell>
-                      <TableCell className="py-4 pl-4 text-xs text-[#5D6679] tnum">
+                      <TableCell className="py-4 px-4 text-xs text-[#5D6679] tnum">
                         {formatDateTime(r.initiatedAt)}
+                      </TableCell>
+                      <TableCell className="py-4 pl-4 text-right">
+                        {r.canConfirm ? (
+                          <ConfirmHandoffButton batchId={r.batchId} batchCode={r.batchCode} />
+                        ) : r.canCancel ? (
+                          <CancelHandoffButton batchId={r.batchId} />
+                        ) : (
+                          <span className="text-xs text-[#858D9D]">-</span>
+                        )}
                       </TableCell>
                     </TableRow>
                   );
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="py-10 text-center text-sm text-[#858D9D]">
+                  <TableCell colSpan={7} className="py-10 text-center text-sm text-[#858D9D]">
                     Belum ada serah-terima tercatat. Klik{" "}
-                    <span className="font-medium text-[#1570EF]">Mulai Serah-terima</span> untuk
+                    <span className="font-medium text-[#1570EF]">Catat Serah-terima</span> untuk
                     memulai.
                   </TableCell>
                 </TableRow>

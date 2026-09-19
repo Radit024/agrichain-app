@@ -1,9 +1,12 @@
 import {
   generateColdChainReading,
-  ScenarioName,
-  SimulatorReadingPayload,
-} from "./scenarios/cold-chain";
-import { generateNonColdChainReading, NonColdScenarioName } from "./scenarios/non-cold-chain";
+  type ScenarioName,
+  type SimulatorReadingPayload,
+} from "./scenarios/cold-chain.ts";
+import {
+  generateNonColdChainReading,
+  type NonColdScenarioName,
+} from "./scenarios/non-cold-chain.ts";
 import type { HandlingMode } from "../../modules/shared-types";
 
 const COLD_CHAIN_SCENARIOS: ScenarioName[] = [
@@ -47,14 +50,16 @@ export async function processBatch(
     readingPayload = generateNonColdChainReading(batchId, scenario, runIndex, now);
   }
 
-  const ingestUrl =
-    process.env.SIMULATOR_INGEST_URL ?? "http://localhost:3000/api/internal/simulator/ingest";
+  const baseUrl = process.env.APP_URL ?? "http://localhost:3000";
+  const ingestUrl = process.env.SIMULATOR_INGEST_URL ?? `${baseUrl}/api/internal/simulator/ingest`;
+  const apiKey =
+    process.env.INTERNAL_API_KEY || process.env.SIMULATOR_API_KEY || "agrichain-simulator-dev-key";
 
   const response = await fetch(ingestUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-internal-api-key": process.env.INTERNAL_API_KEY ?? "",
+      "x-internal-api-key": apiKey,
     },
     body: JSON.stringify(readingPayload),
   });

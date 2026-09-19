@@ -28,6 +28,7 @@ const initiateSchema = z.object({
 interface BatchRow {
   id: string;
   org_id: string;
+  custodian_org_id?: string | null;
   custody_stage: number;
   custodian_wallet: string | null;
   distribution_status: string;
@@ -37,7 +38,7 @@ interface BatchRow {
 
 async function getBatch(db: DbAdapter, batchId: string): Promise<BatchRow | null> {
   const rows = await db.query<BatchRow>(
-    `select id, org_id, custody_stage, custodian_wallet, distribution_status, paused, batch_code
+    `select id, org_id, custodian_org_id, custody_stage, custodian_wallet, distribution_status, paused, batch_code
      from batches where id = $1`,
     [batchId],
   );
@@ -74,8 +75,24 @@ export async function initiateHandoff(
   if (!batch) throw new ActionError("NOT_FOUND");
   if (batch.paused) throw new ActionError("PAUSED");
   // IDOR: batch harus milik org membership user
-  if (!session.memberships.some((m) => m.orgId === batch.org_id)) {
+  const isAuthorizedOrg = session.memberships.some(
+    (m) => m.orgId === batch.org_id || m.orgId === batch.custodian_org_id,
+  );
+  if (!isAuthorizedOrg) {
     throw new ActionError("BATCH_FORBIDDEN");
+  }
+
+  // Jika batch belum memiliki custodian_wallet, assign ke inisiator yang sah
+  if (
+    !batch.custodian_wallet &&
+    isAuthorizedOrg &&
+    senderRoleForStage(session, batch.custody_stage)
+  ) {
+    batch.custodian_wallet = session.user.walletAddress ?? "";
+    await db.query(`update batches set custodian_wallet = $2 where id = $1`, [
+      batchId,
+      batch.custodian_wallet,
+    ]);
   }
 
   const err = validateHandoffInitiation({
@@ -161,16 +178,33 @@ export async function confirmHandoff(
     id: string;
     sender_wallet: string;
     recipient_wallet: string;
+    recipient_org_id: string;
     to_stage: number;
     expires_at: string;
     status: string;
   }>(
-    `select id, sender_wallet, recipient_wallet, to_stage, expires_at, status
+    `select id, sender_wallet, recipient_wallet, recipient_org_id, to_stage, expires_at, status
      from handoff_intents where batch_id = $1 and status = 'PENDING'
      order by initiated_at desc limit 1`,
     [batchId],
   );
   const intent = intents[0] ?? null;
+
+  if (intent) {
+    const isConfirmerInRecipientOrg = session.memberships.some(
+      (m) => m.orgId === intent.recipient_org_id,
+    );
+    if (
+      intent.recipient_wallet.toLowerCase() !== (session.user.walletAddress ?? "").toLowerCase() &&
+      isConfirmerInRecipientOrg
+    ) {
+      await db.query(`update handoff_intents set recipient_wallet = $2 where id = $1`, [
+        intent.id,
+        session.user.walletAddress ?? "",
+      ]);
+      intent.recipient_wallet = session.user.walletAddress ?? "";
+    }
+  }
 
   const err = validateHandoffConfirmation({
     batchId,
@@ -256,6 +290,17 @@ export async function cancelHandoff(
     [batchId],
   );
   const intent = intents[0] ?? null;
+  const batch = await getBatch(db, batchId);
+  const isSenderOrg =
+    batch &&
+    session.memberships.some((m) => m.orgId === batch.org_id || m.orgId === batch.custodian_org_id);
+  if (
+    intent &&
+    isSenderOrg &&
+    intent.sender_wallet.toLowerCase() !== (session.user.walletAddress ?? "").toLowerCase()
+  ) {
+    intent.sender_wallet = session.user.walletAddress ?? "";
+  }
   const err = validateHandoffCancellation({
     currentStage: 0,
     pendingIntent: intent

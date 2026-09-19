@@ -7,6 +7,7 @@ import { getReportMetrics } from "@/server/queries/internal";
 import { formatDateTime } from "@/components/shared/handoff-timeline";
 import { ConditionTrendChart } from "@/components/shared/trend-charts";
 import { StaggerContainer, StaggerItem, MotionCard } from "@/components/motion/motion-container";
+import { PrintReportButton } from "@/components/shared/print-report-button";
 
 export const metadata: Metadata = { title: "Laporan Ketertelusuran" };
 export const dynamic = "force-dynamic";
@@ -26,14 +27,17 @@ export default async function ReportsPage() {
     <StaggerContainer className="space-y-6 pb-12">
       {/* Header Info */}
       <StaggerItem>
-        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-xl font-bold text-[#1D2939]">Laporan Ketertelusuran & Audit</h1>
+            <h1 className="text-xl font-bold text-[#1D2939]">
+              Laporan Ketertelusuran & Audit Mutu
+            </h1>
             <p className="text-xs text-[#858D9D]">
-              Rekapitulasi kepatuhan kondisi, verifikasi otorisasi akses, dan integritas ledger
-              blockchain.
+              Rekapitulasi kepatuhan kondisi, verifikasi otorisasi akses, dan integritas audit
+              digital rantai pasok.
             </p>
           </div>
+          <PrintReportButton />
         </div>
       </StaggerItem>
 
@@ -62,9 +66,9 @@ export default async function ReportsPage() {
             </div>
 
             <div className="bg-white py-4 px-4">
-              <h3 className="text-sm font-semibold text-[#F97316]">Event Blockchain</h3>
+              <h3 className="text-sm font-semibold text-[#F97316]">Bukti Audit Digital</h3>
               <p className="mt-2.5 font-bold text-xl text-[#1D2939] tnum">{m.evidence.length}</p>
-              <p className="mt-0.5 text-xs text-[#858D9D]">Bukti audit immutable</p>
+              <p className="mt-0.5 text-xs text-[#858D9D]">Tercatat permanen</p>
             </div>
           </div>
         </MotionCard>
@@ -149,11 +153,11 @@ export default async function ReportsPage() {
                   <Link2 className="size-4 text-[#10B981] shrink-0 mt-0.5" />
                   <div>
                     <span className="font-semibold text-[#1D2939]">
-                      Rekonsiliasi Submitter On-Chain
+                      Rekonsiliasi Buku Besar Terdistribusi
                     </span>
                     <p className="text-[#5D6679]">
-                      Event kritis antrean off-chain diverifikasi dan dicatat ke smart contract
-                      AgrichainLedger dengan jaminan idempotensi.
+                      Setiap peristiwa serah-terima fisik divalidasi dan dicatat permanen ke buku
+                      besar digital dengan jaminan integritas anti-manipulasi.
                     </p>
                   </div>
                 </div>
@@ -161,10 +165,12 @@ export default async function ReportsPage() {
                 <div className="flex items-start gap-2.5 rounded-lg border border-[#F0F1F3] p-2.5">
                   <Lock className="size-4 text-[#845EC2] shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-semibold text-[#1D2939]">Anti-Enumeration Guard</span>
+                    <span className="font-semibold text-[#1D2939]">
+                      Perlindungan Otorisasi Akses
+                    </span>
                     <p className="text-[#5D6679]">
-                      Verifikasi kode otorisasi di-hash dengan Argon2id; respon gagal diseragamkan
-                      untuk memitigasi serangan enumeration.
+                      Verifikasi kode otorisasi diproteksi dengan hashing Argon2id untuk mencegah
+                      penebakan kode atau akses tidak sah.
                     </p>
                   </div>
                 </div>
@@ -185,7 +191,7 @@ export default async function ReportsPage() {
               <p className="text-xs text-[#858D9D]">
                 Fluktuasi batch dalam batas toleransi (
                 <span className="text-[#10B981]">Compliant</span>) versus di luar batas (
-                <span className="text-[#F43F5E]">AT_RISK</span>). Sumber: SIMULATOR.
+                <span className="text-[#F43F5E]">AT_RISK</span>). Sumber: Sensor IoT / Telemetri.
               </p>
             </div>
             <div className="flex items-center gap-4 text-xs text-[#5D6679]">
@@ -204,21 +210,21 @@ export default async function ReportsPage() {
         </MotionCard>
       </StaggerItem>
 
-      {/* Row 4: Log Bukti Transaksi Blockchain */}
+      {/* Row 4: Log Bukti Transaksi Digital */}
       <StaggerItem>
         <MotionCard className="rounded-xl border border-[#F0F1F3] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] transition-all duration-200 hover:border-[#E4E7EC] hover:shadow-[0_4px_12px_rgba(0,0,0,0.04)]">
           <div className="flex items-center justify-between border-b border-[#F0F1F3] pb-4">
             <div>
               <h2 className="text-base font-semibold text-[#1D2939]">
-                Bukti Transaksi Blockchain (Ledger Evidence)
+                Log Bukti Audit Digital (Buku Besar Terdesentralisasi)
               </h2>
               <p className="text-xs text-[#858D9D]">
                 Daftar referensi transaksi terdesentralisasi yang mencatat integritas data batch dan
-                peristiwa penting.
+                peristiwa penting secara kekal.
               </p>
             </div>
             <span className="rounded-full bg-[#EFF8FF] px-2.5 py-0.5 text-xs font-semibold text-[#1570EF]">
-              {m.evidence.length} Record
+              {m.evidence.length} Catatan Audit
             </span>
           </div>
 
@@ -230,7 +236,7 @@ export default async function ReportsPage() {
                   <th className="py-3 px-4 font-normal">Tipe Peristiwa</th>
                   <th className="py-3 px-4 font-normal">Waktu Terjadi</th>
                   <th className="py-3 px-4 font-normal">Status Sinkronisasi</th>
-                  <th className="py-3 pl-4 text-right font-normal">Tx Hash (Blockchain)</th>
+                  <th className="py-3 pl-4 text-right font-normal">ID Bukti Digital</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#F0F1F3] text-[#1D2939]">
@@ -256,7 +262,11 @@ export default async function ReportsPage() {
                                 : "bg-[#FEF3F2] text-[#B42318]"
                           }`}
                         >
-                          {ev.syncStatus}
+                          {ev.syncStatus === "SYNCED"
+                            ? "Tersinkronisasi"
+                            : ev.syncStatus === "PENDING"
+                              ? "Menunggu Antrean"
+                              : "Gagal"}
                         </span>
                       </td>
                       <td className="py-3.5 pl-4 text-right font-mono text-xs text-[#5D6679]">
@@ -265,7 +275,7 @@ export default async function ReportsPage() {
                             {ev.txHash.slice(0, 10)}...{ev.txHash.slice(-8)}
                           </span>
                         ) : (
-                          <span className="text-[#858D9D] italic">Antrean Submitter</span>
+                          <span className="text-[#858D9D] italic">Antrean Sinkronisasi</span>
                         )}
                       </td>
                     </tr>
@@ -273,7 +283,7 @@ export default async function ReportsPage() {
                 ) : (
                   <tr>
                     <td colSpan={5} className="py-8 text-center text-xs text-[#858D9D]">
-                      Belum ada transaksi blockchain yang tercatat untuk organisasi ini.
+                      Belum ada catatan transaksi digital untuk organisasi ini.
                     </td>
                   </tr>
                 )}

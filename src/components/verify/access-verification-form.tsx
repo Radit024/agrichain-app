@@ -135,64 +135,6 @@ export function AccessVerificationForm({
 
   return (
     <div className="space-y-4">
-      {/* Konteks batch terkunci */}
-      <section
-        className="rounded-xl border border-border bg-surface-muted p-4"
-        aria-label="Konteks batch"
-      >
-        <p className="text-xs font-medium text-ink-muted">Batch yang diverifikasi</p>
-        {publicId ? (
-          <p className="mt-1 font-mono text-sm font-semibold text-ink">{publicId}</p>
-        ) : (
-          <p className="mt-1 text-sm text-ink-muted">
-            Pindai QR batch atau masukkan ID publik untuk mengunci konteks.
-          </p>
-        )}
-        <div className="mt-3 flex flex-wrap gap-2">
-          <Button
-            type="button"
-            variant={scanning ? "outline" : "secondary"}
-            size="sm"
-            onClick={scanning ? stopScanner : () => void startScan()}
-          >
-            {scanning ? (
-              <>
-                <X aria-hidden className="size-3.5" />
-                Hentikan kamera
-              </>
-            ) : (
-              <>
-                <Camera aria-hidden className="size-3.5" />
-                Pindai QR
-              </>
-            )}
-          </Button>
-          {publicId ? (
-            <Button type="button" variant="ghost" size="sm" onClick={() => setPublicId("")}>
-              Ubah batch
-            </Button>
-          ) : null}
-        </div>
-      </section>
-
-      {scanning ? (
-        <section className="rounded-xl border border-border bg-card p-4" aria-label="Pemindai QR">
-          <p className="text-xs leading-4 text-ink-muted">
-            Arahkan kamera ke QR batch. Izin kamera diminta browser; identitas dan kode tidak pernah
-            dikirim ke halaman publik.
-          </p>
-          <div className="relative mx-auto mt-3 aspect-square w-full max-w-[280px] overflow-hidden rounded-lg border-2 border-brand/40 bg-ink/5">
-            <ScanlineBeam />
-            <div id="qr-reader-region" ref={scannerDivRef} className="size-full" />
-          </div>
-          {scanError ? (
-            <p role="alert" className="mt-3 text-sm text-warning">
-              {scanError}
-            </p>
-          ) : null}
-        </section>
-      ) : null}
-
       <AnimatePresence mode="wait">
         {phase === "input" ? (
           <motion.section
@@ -201,59 +143,113 @@ export function AccessVerificationForm({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.18 }}
-            className="space-y-4 rounded-xl border border-border bg-card p-5"
+            className="space-y-5 rounded-xl border border-border bg-card p-6 shadow-sm"
           >
-            <div className="space-y-1.5">
-              <Label htmlFor="verify-public-id">ID publik batch</Label>
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <ScanLine
-                    aria-hidden
-                    className="absolute left-2.5 top-2.5 size-4 text-ink-muted"
-                  />
-                  <Input
-                    id="verify-public-id"
-                    value={publicId}
-                    onChange={(e) => setPublicId(e.target.value.toUpperCase())}
-                    placeholder="XXXX-XXXX-XXXX-XXXX"
-                    className="pl-8 font-mono"
-                    maxLength={19}
-                    aria-required
-                  />
-                </div>
-              </div>
-              <p className="text-xs text-ink-muted">
-                Format: 4 kelompok huruf/angka yang dipisah strip.
+            <div>
+              <h2 className="text-base font-bold text-[#1D2939]">
+                Validasi Hak Akses & Status Batch
+              </h2>
+              <p className="text-xs text-[#858D9D] mt-0.5">
+                Pindai QR kode kemasan atau masukkan ID publik serta kode otorisasi untuk
+                memvalidasi izin operasional.
               </p>
             </div>
 
+            {/* Input / Scanner ID Publik */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="verify-public-id" className="text-xs font-semibold text-[#344054]">
+                  ID Publik Batch <span className="text-red-500">*</span>
+                </Label>
+                <Button
+                  type="button"
+                  variant={scanning ? "destructive" : "outline"}
+                  size="sm"
+                  onClick={scanning ? stopScanner : () => void startScan()}
+                  className="h-7 text-[11px] gap-1 px-2.5"
+                >
+                  {scanning ? (
+                    <>
+                      <X aria-hidden className="size-3" />
+                      Tutup Kamera
+                    </>
+                  ) : (
+                    <>
+                      <Camera aria-hidden className="size-3 text-[#1570EF]" />
+                      Pindai via Kamera
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {scanning ? (
+                <div className="rounded-xl border-2 border-[#1570EF]/30 bg-[#F9FAFB] p-3">
+                  <p className="text-center text-xs text-[#5D6679] mb-2">
+                    Arahkan kamera perangkat ke QR label kemasan batch...
+                  </p>
+                  <div className="relative mx-auto aspect-square w-full max-w-[260px] overflow-hidden rounded-lg border-2 border-brand/50 bg-black/5">
+                    <ScanlineBeam />
+                    <div id="qr-reader-region" ref={scannerDivRef} className="size-full" />
+                  </div>
+                  {scanError ? (
+                    <p role="alert" className="mt-2 text-center text-xs text-danger font-medium">
+                      {scanError}
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
+
+              <div className="relative">
+                <ScanLine aria-hidden className="absolute left-3 top-2.5 size-4 text-[#858D9D]" />
+                <Input
+                  id="verify-public-id"
+                  value={publicId}
+                  onChange={(e) => setPublicId(e.target.value.toUpperCase())}
+                  placeholder="Contoh: 7F8A-9B2C-3D4E-5F6A"
+                  className="pl-9 font-mono text-xs h-9.5"
+                  maxLength={19}
+                  aria-required
+                />
+              </div>
+              <p className="text-[11px] text-[#858D9D]">
+                Format: 4 kelompok karakter pemisah strip (XXXX-XXXX-XXXX-XXXX)
+              </p>
+            </div>
+
+            {/* Input Kode Otorisasi */}
             <div className="space-y-1.5">
-              <Label htmlFor="verify-code">Kode otorisasi</Label>
+              <Label htmlFor="verify-code" className="text-xs font-semibold text-[#344054]">
+                Kode Otorisasi Akses <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="verify-code"
                 type="password"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
-                placeholder="Kode dari administrator"
+                placeholder="Masukkan kode otorisasi dari admin/jadwal titik"
                 autoComplete="off"
+                className="text-xs h-9.5"
                 aria-required
               />
-              <p className="text-xs text-ink-muted">
-                Kode diproses sebagai hash — tidak pernah disimpan atau dicatat.
+              <p className="text-[11px] text-[#858D9D]">
+                Kode diproses secara aman menggunakan hash Argon2id (tidak pernah disimpan mentah).
               </p>
             </div>
 
+            {/* Pilihan Titik Distribusi */}
             <div className="space-y-1.5">
-              <Label htmlFor="verify-point">Titik verifikasi</Label>
+              <Label htmlFor="verify-point" className="text-xs font-semibold text-[#344054]">
+                Titik Distribusi Operasional <span className="text-red-500">*</span>
+              </Label>
               <Select value={pointId} onValueChange={(val) => setPointId(val ?? "")}>
-                <SelectTrigger id="verify-point" className="w-full">
-                  <SelectValue placeholder="Pilih titik">
-                    {points.find((p) => p.id === pointId)?.publicName ?? "Pilih titik"}
+                <SelectTrigger id="verify-point" className="w-full text-xs h-9.5">
+                  <SelectValue placeholder="Pilih titik distribusi">
+                    {points.find((p) => p.id === pointId)?.publicName ?? "Pilih titik distribusi"}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {points.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
+                    <SelectItem key={p.id} value={p.id} className="text-xs">
                       {p.publicName} ({p.orgName})
                     </SelectItem>
                   ))}
@@ -262,7 +258,10 @@ export function AccessVerificationForm({
             </div>
 
             {error ? (
-              <p role="alert" className="text-sm text-danger">
+              <p
+                role="alert"
+                className="rounded-lg bg-danger-soft p-3 text-xs text-danger font-medium border border-danger/20"
+              >
                 {error}
               </p>
             ) : null}

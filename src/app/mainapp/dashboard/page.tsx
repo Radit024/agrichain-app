@@ -14,6 +14,7 @@ import {
   Warehouse,
   ScanLine,
   ArrowRight,
+  Truck,
 } from "lucide-react";
 import { APP_SESSION_COOKIE, readAppSession } from "@/server/auth/app-session";
 import { getDashboardMetrics } from "@/server/queries/internal";
@@ -46,6 +47,45 @@ export default async function DashboardPage() {
 
   return (
     <StaggerContainer className="space-y-6 pb-12">
+      {/* Pusat Tindakan: Kiriman Masuk Menunggu Penerimaan */}
+      {m.pendingIncomingItems && m.pendingIncomingItems.length > 0 && (
+        <StaggerItem>
+          <div className="rounded-xl border border-[#FEDF89] bg-[#FFFAEB] p-4.5 shadow-xs transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="flex items-start gap-3.5">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#FEF0C7] text-[#B54708]">
+                <Truck className="size-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-[#B54708]">
+                    Pusat Tindakan: {m.pendingIncomingItems.length} Kiriman Menunggu Konfirmasi Anda
+                  </h3>
+                  <span className="rounded-full bg-[#FEE4E2] px-2 py-0.5 text-[10px] font-bold text-[#B42318]">
+                    Perlu Tindakan
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-[#7A271A]">
+                  Muatan dari{" "}
+                  <span className="font-semibold">{m.pendingIncomingItems[0].senderOrg}</span>{" "}
+                  (Batch{" "}
+                  <span className="font-mono font-semibold">
+                    {m.pendingIncomingItems[0].batchCode}
+                  </span>
+                  ) telah dikirim dan siap diverifikasi serta diterima di fasilitas Anda.
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/mainapp/serah-terima"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-[#12B76A] hover:bg-[#039855] text-white px-4 py-2 text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+            >
+              <span>Terima Muatan Sekarang</span>
+              <ArrowRight className="size-3.5" />
+            </Link>
+          </div>
+        </StaggerItem>
+      )}
+
       {/* Row 1: Ringkasan Distribusi (Kiri) + Status Kondisi Batch (Kanan) */}
       <StaggerItem className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* Distribusi & Kustodi Overview */}

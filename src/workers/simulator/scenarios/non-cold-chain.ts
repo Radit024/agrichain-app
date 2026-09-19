@@ -1,6 +1,6 @@
 import type { ParameterCode } from "../../../modules/shared-types";
-import { computeSeed, seededFloat } from "../seed";
-import type { SimulatorReadingPayload } from "./cold-chain";
+import { computeSeed, seededFloat } from "../seed.ts";
+import type { SimulatorReadingPayload } from "./cold-chain.ts";
 
 export type NonColdScenarioName =
   "NORMAL" | "HIGH_HUMIDITY" | "SHOCK_EVENT" | "ROUTE_DELAY" | "SENSOR_OFFLINE";
