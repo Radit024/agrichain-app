@@ -306,29 +306,13 @@ function PrivyLoginControl() {
           className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg bg-[#1570EF] hover:bg-[#004EEB] text-sm font-semibold text-white transition-colors shadow-xs cursor-pointer disabled:opacity-60"
         >
           <GoogleIcon className="size-4.5" />
-          <span>{loginState === "loading" ? "Menyiapkan login…" : "Lanjutkan dengan Google"}</span>
-        </button>
-
-        {/* Email Login via Privy */}
-        <button
-          type="button"
-          onClick={handleGoogleLogin}
-          disabled={!ready || loginState === "loading"}
-          className="flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-[#D0D5DD] bg-white text-sm font-semibold text-[#344054] transition-colors hover:bg-gray-50 active:scale-[0.99] cursor-pointer disabled:opacity-60 shadow-2xs"
-        >
-          <span>Lanjutkan dengan Email</span>
+          <span>
+            {loginState === "loading" ? "Menyiapkan login…" : "Lanjutkan dengan Google via Privy"}
+          </span>
         </button>
 
         {/* Dev Grant Access Button in dev environment */}
         {process.env.NODE_ENV !== "production" ? <DevGrantButton /> : null}
-      </div>
-
-      {/* Domain Context & Security Note */}
-      <div className="mt-6 rounded-lg border border-[#F0F1F3] bg-[#F9FAFB] p-3 text-left">
-        <p className="text-[11px] leading-relaxed text-[#667085]">
-          Autentikasi diamankan oleh <strong>Privy</strong> dengan <em>embedded wallet</em>. Setiap
-          tindakan pendaftaran batch dan serah-terima distribusi dicatat ke jejak audit on-chain.
-        </p>
       </div>
     </div>
   );
@@ -385,16 +369,4 @@ function DevGrantButton() {
       setGranting(false);
     }
   }, [getAccessToken, router]);
-
-  return (
-    <Button
-      className="mt-3 h-9 w-full rounded-xl"
-      disabled={granting}
-      onClick={() => void grant()}
-      size="sm"
-      variant="outline"
-    >
-      {granting ? "Memberi akses…" : "Aktifkan akses langsung (mode pengembangan)"}
-    </Button>
-  );
 }
