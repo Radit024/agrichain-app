@@ -1,6 +1,12 @@
 import { defineConfig } from "hardhat/config";
 import hardhatToolboxMochaEthers from "@nomicfoundation/hardhat-toolbox-mocha-ethers";
 
+try {
+  process.loadEnvFile();
+} catch {
+  // Abaikan jika file .env tidak ditemukan
+}
+
 const config = defineConfig({
   plugins: [hardhatToolboxMochaEthers],
   solidity: {
@@ -25,7 +31,7 @@ const config = defineConfig({
     },
     amoy: {
       type: "http",
-      url: process.env.POLYGON_AMOY_RPC ?? "https://rpc-amoy.polygon.technology",
+      url: process.env.POLYGON_AMOY_RPC ?? "https://polygon-amoy-bor-rpc.publicnode.com",
       accounts: process.env.EVALUATOR_PRIVATE_KEY ? [process.env.EVALUATOR_PRIVATE_KEY] : [],
     },
   },

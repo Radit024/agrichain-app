@@ -12,9 +12,36 @@ import hre from "hardhat";
 import { writeFileSync, mkdirSync } from "node:fs";
 import path from "node:path";
 
+try {
+  process.loadEnvFile();
+} catch {
+  // Abaikan jika file .env tidak ditemukan
+}
+
 async function main() {
-  const [deployer] = await (await hre.network.getOrCreate()).ethers.getSigners();
+  const conn = await hre.network.getOrCreate();
+  const signers = await conn.ethers.getSigners();
+  if (!signers || signers.length === 0) {
+    throw new Error(
+      "Tidak ada signer yang ditemukan! Pastikan EVALUATOR_PRIVATE_KEY sudah diset di file .env dan memiliki prefix 0x.",
+    );
+  }
+  const [deployer] = signers;
   console.log("Deployer:", deployer.address);
+
+  const balance = await conn.ethers.provider.getBalance(deployer.address);
+  const balancePol = Number(conn.ethers.formatEther(balance));
+  console.log("Saldo Deployer:", balancePol.toFixed(4), "POL");
+
+  if (balancePol < 0.2) {
+    throw new Error(
+      `\n❌ Saldo wallet deployer (${deployer.address}) adalah ${balancePol.toFixed(4)} POL, masih kurang untuk biaya deploy!\n` +
+        `Deploy kontrak AgrichainLedger membutuhkan gas sekitar 2.260.000 unit (~0.15 - 0.25 POL pada gas price saat ini).\n` +
+        `Silakan klaim tambahan testnet POL dari faucet (disarankan minimal 0.3 - 0.5 POL agar aman):\n` +
+        `- https://faucet.polygon.technology/\n` +
+        `- https://faucet.quicknode.com/polygon/amoy\n`,
+    );
+  }
 
   const registrar = process.env.REGISTRAR_ADDRESS;
   const distributor = process.env.DISTRIBUTOR_ADDRESS;
@@ -23,7 +50,7 @@ async function main() {
   const Ledger = await (
     await hre.network.getOrCreate()
   ).ethers.getContractFactory("AgrichainLedger");
-  const ledger = await Ledger.deploy();
+  const ledger = await Ledger.deploy({ gasLimit: 3000000 });
   await ledger.waitForDeployment();
   const address = await ledger.getAddress();
   console.log("AgrichainLedger deployed @", address);
