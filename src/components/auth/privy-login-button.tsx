@@ -369,4 +369,15 @@ function DevGrantButton() {
       setGranting(false);
     }
   }, [getAccessToken, router]);
+
+  return (
+    <button
+      type="button"
+      onClick={grant}
+      disabled={granting}
+      className="flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-[#D0D5DD] bg-white text-xs font-semibold text-[#344054] hover:bg-[#F9FAFB] active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+    >
+      {granting ? "Memberi Akses…" : "Beri Akses Akun Saya (Dev Mode)"}
+    </button>
+  );
 }

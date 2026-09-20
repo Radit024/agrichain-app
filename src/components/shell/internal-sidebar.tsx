@@ -12,6 +12,7 @@ import {
   Settings,
   LogOut,
   ShieldCheck,
+  UserCog,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "motion/react";
@@ -19,7 +20,7 @@ import { HexagonBrandLogo, BrandWordmark } from "@/components/brand/brand-logo";
 
 /**
  * Sidebar operasional ketertelusuran rantai pasok pangan:
- * - Menu: Dashboard, Batch, Serah-terima, Titik Distribusi, Verifikasi Akses, Laporan
+ * - Menu: Dashboard, Batch, Serah-terima, Titik Distribusi, Verifikasi Akses, Laporan, Manajemen Peran
  * - Bawah: Pengaturan, Keluar
  */
 
@@ -30,6 +31,7 @@ const navItems = [
   { href: "/mainapp/titik-distribusi", label: "Titik Distribusi", icon: MapPin },
   { href: "/mainapp/verifikasi", label: "Verifikasi Akses", icon: ShieldCheck },
   { href: "/mainapp/laporan", label: "Laporan", icon: FileBarChart2 },
+  { href: "/mainapp/superadmin/roles", label: "Manajemen Peran", icon: UserCog },
 ] as const;
 
 export function InternalSidebar({

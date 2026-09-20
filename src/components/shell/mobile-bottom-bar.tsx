@@ -195,6 +195,22 @@ export function MobileBottomBar({
               <ChevronRight className="size-4 shrink-0 text-[#C0C5D0]" />
             </Link>
 
+            {/* Manajemen Peran */}
+            <Link
+              href="/mainapp/superadmin/roles"
+              onClick={() => setProfileOpen(false)}
+              className="flex items-center gap-3.5 rounded-xl px-3 py-3.5 text-sm font-medium text-[#1D2939] transition-colors hover:bg-[#F9FAFB] active:scale-[0.98]"
+            >
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#EFF8FF]">
+                <ShieldCheck aria-hidden className="size-4.5 text-[#1570EF]" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-[#1D2939]">Manajemen Peran</p>
+                <p className="text-xs text-[#858D9D]">Kelola pengguna dan hak akses operasional</p>
+              </div>
+              <ChevronRight className="size-4 shrink-0 text-[#C0C5D0]" />
+            </Link>
+
             {/* Pengaturan */}
             <Link
               href="/mainapp/pengaturan"
