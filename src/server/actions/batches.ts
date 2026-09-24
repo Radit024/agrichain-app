@@ -13,7 +13,7 @@ import type { Session } from "../auth/session";
  * embedded wallet pengguna (client) lalu receipt dikonfirmasi/direkonsiliasi.
  */
 
-export const registerBatchSchema = z.object({
+const registerBatchSchema = z.object({
   categoryId: z.string().uuid(),
   profileId: z.string().uuid(),
   batchCode: z

@@ -558,6 +558,28 @@ export async function getBatchDetail(
     [batchId],
   );
 
+  function parseJsonArray(val: unknown): string[] {
+    if (Array.isArray(val)) return val;
+    if (typeof val === "string") {
+      try {
+        const parsed = JSON.parse(val);
+        if (Array.isArray(parsed)) return parsed;
+      } catch {}
+    }
+    return [];
+  }
+
+  function parseJsonObject<T>(val: unknown): T | null {
+    if (!val) return null;
+    if (typeof val === "object") return val as T;
+    if (typeof val === "string") {
+      try {
+        return JSON.parse(val) as T;
+      } catch {}
+    }
+    return null;
+  }
+
   return {
     id: b.id,
     batchCode: b.batch_code,
@@ -572,13 +594,15 @@ export async function getBatchDetail(
     paused: b.paused,
     createdAt: b.created_at,
     updatedAt: b.updated_at,
-    profileSnapshot: b.profile_snapshot,
+    profileSnapshot: parseJsonObject<BatchDetail["profileSnapshot"]>(b.profile_snapshot),
+    chainSyncStatus: b.chain_sync_status,
+    chainTxHash: tx[0]?.chain_tx_hash ?? null,
     latestEvaluation: evalRows[0]
       ? {
           conditionStatus: evalRows[0].condition_status,
           dataQualityStatus: evalRows[0].data_quality_status,
-          reasons: evalRows[0].reasons,
-          alerts: evalRows[0].operational_alerts,
+          reasons: parseJsonArray(evalRows[0].reasons),
+          alerts: parseJsonArray(evalRows[0].operational_alerts),
           evaluatedAt: evalRows[0].created_at,
         }
       : null,
@@ -597,8 +621,8 @@ export async function getBatchDetail(
       id: e.id,
       conditionStatus: e.condition_status,
       dataQualityStatus: e.data_quality_status,
-      reasons: e.reasons,
-      alerts: e.operational_alerts,
+      reasons: parseJsonArray(e.reasons),
+      alerts: parseJsonArray(e.operational_alerts),
       evaluatedAt: e.created_at,
     })),
     recentReadings: readingRows.map((r) => ({

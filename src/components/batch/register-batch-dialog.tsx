@@ -149,22 +149,48 @@ export function RegisterBatchDialog({
               <Label htmlFor="batch-category" className="text-xs font-semibold text-[#344054]">
                 Kategori Produk <span className="text-red-500">*</span>
               </Label>
-              <Select value={categoryId} onValueChange={(v) => handleCategoryChange(v ?? "")}>
+              <Select
+                value={categoryId}
+                onValueChange={(v) => handleCategoryChange(v ?? "")}
+                disabled={categories.length === 0}
+              >
                 <SelectTrigger
                   id="batch-category"
                   className="h-9.5 w-full rounded-lg border-[#D0D5DD] text-xs"
                 >
-                  <SelectValue placeholder="Pilih kategori produk" />
+                  <SelectValue
+                    placeholder={
+                      categories.length === 0
+                        ? "Tidak ada kategori produk tersedia"
+                        : "Pilih kategori produk"
+                    }
+                  >
+                    {selectedCategory
+                      ? `${selectedCategory.categoryName} (${selectedCategory.handlingMode === "COLD_CHAIN" ? "Cold Chain" : "Non-Cold Chain"})`
+                      : undefined}
+                  </SelectValue>
                 </SelectTrigger>
-                <SelectContent>
-                  {categories.map((c) => (
-                    <SelectItem key={c.categoryId} value={c.categoryId} className="text-xs">
-                      {c.categoryName} (
-                      {c.handlingMode === "COLD_CHAIN" ? "Cold Chain" : "Non-Cold Chain"})
-                    </SelectItem>
-                  ))}
+                <SelectContent alignItemWithTrigger={false}>
+                  {categories.length === 0 ? (
+                    <div className="py-3 px-2 text-center text-xs text-[#858D9D]">
+                      Tidak ada kategori produk tersedia untuk organisasi Anda
+                    </div>
+                  ) : (
+                    categories.map((c) => (
+                      <SelectItem key={c.categoryId} value={c.categoryId} className="text-xs">
+                        {c.categoryName} (
+                        {c.handlingMode === "COLD_CHAIN" ? "Cold Chain" : "Non-Cold Chain"})
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
+              {categories.length === 0 && (
+                <p className="text-[11px] text-amber-600">
+                  Belum ada kategori produk untuk organisasi Anda. Daftarkan kategori produk
+                  terlebih dahulu.
+                </p>
+              )}
             </div>
 
             {selectedCategory ? (
@@ -191,9 +217,13 @@ export function RegisterBatchDialog({
                     <div className="pt-2">
                       <Select value={profileId} onValueChange={(v) => setProfileId(v ?? "")}>
                         <SelectTrigger className="h-8 text-xs bg-white text-[#344054]">
-                          <SelectValue placeholder="Pilih versi" />
+                          <SelectValue placeholder="Pilih versi">
+                            {selectedCategory.profiles.find((p) => p.profileId === profileId)
+                              ? `Versi ${selectedCategory.profiles.find((p) => p.profileId === profileId)!.version}`
+                              : undefined}
+                          </SelectValue>
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent alignItemWithTrigger={false}>
                           {selectedCategory.profiles.map((p) => (
                             <SelectItem key={p.profileId} value={p.profileId} className="text-xs">
                               Versi {p.version}
