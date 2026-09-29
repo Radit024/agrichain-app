@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useEffect, useTransition } from "react";
 import {
   Users,
   UserCheck,
@@ -17,6 +17,7 @@ import {
   AlertTriangle,
   X,
   ShieldCheck,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -72,7 +73,32 @@ export function RoleManagementClient({ initialUsers, metrics, organizations }: P
   // Modal States
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserRoleItem | null>(null);
+  const [confirmModal, setConfirmModal] = useState<
+    | {
+        type: "REMOVE_MEMBERSHIP";
+        membershipId: string;
+        userId: string;
+        userName: string;
+        orgName: string;
+        role: string;
+      }
+    | {
+        type: "REVOKE_ACCESS";
+        user: UserRoleItem;
+      }
+    | null
+  >(null);
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape" && confirmModal && !isPending) {
+        setConfirmModal(null);
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [confirmModal, isPending]);
 
   // Add User Form State
   const [newDid, setNewDid] = useState("");
@@ -176,18 +202,36 @@ export function RoleManagementClient({ initialUsers, metrics, organizations }: P
     });
   }
 
-  async function handleRemoveMembership(membershipId: string, userId: string) {
-    if (!confirm("Hapus penugasan organisasi ini dari pengguna?")) return;
+  async function handleConfirmAction() {
+    if (!confirmModal) return;
 
-    startTransition(async () => {
-      const res = await removeUserMembership({ membershipId, userId });
-      if (res.ok) {
-        toast.success("Penugasan peran dihapus.");
-        setEditingUser(null);
-      } else {
-        toast.error(res.error || "Gagal menghapus penugasan.");
-      }
-    });
+    if (confirmModal.type === "REMOVE_MEMBERSHIP") {
+      const { membershipId, userId } = confirmModal;
+      startTransition(async () => {
+        const res = await removeUserMembership({ membershipId, userId });
+        if (res.ok) {
+          toast.success("Penugasan peran berhasil dihapus.");
+          setConfirmModal(null);
+          setEditingUser(null);
+        } else {
+          toast.error(res.error || "Gagal menghapus penugasan.");
+        }
+      });
+    } else if (confirmModal.type === "REVOKE_ACCESS") {
+      const { user } = confirmModal;
+      startTransition(async () => {
+        const res = await updateUserStatus({
+          userId: user.id,
+          status: "REVOKED",
+        });
+        if (res.ok) {
+          toast.success(`Akses akun ${user.displayName} dicabut.`);
+          setConfirmModal(null);
+        } else {
+          toast.error(res.error || "Gagal mengubah status.");
+        }
+      });
+    }
   }
 
   async function handleToggleStatus(user: UserRoleItem, targetStatus: "ACTIVE" | "REVOKED") {
@@ -511,7 +555,12 @@ export function RoleManagementClient({ initialUsers, metrics, organizations }: P
                           <button
                             type="button"
                             disabled={isPending}
-                            onClick={() => handleToggleStatus(user, "REVOKED")}
+                            onClick={() =>
+                              setConfirmModal({
+                                type: "REVOKE_ACCESS",
+                                user,
+                              })
+                            }
                             className="inline-flex items-center rounded-lg border border-[#FECDCA] bg-[#FEF3F2] px-2.5 py-1 text-xs font-semibold text-[#B42318] hover:bg-[#FEE4E2] active:scale-95 transition-all cursor-pointer disabled:opacity-50"
                           >
                             Cabut Akses
@@ -732,8 +781,17 @@ export function RoleManagementClient({ initialUsers, metrics, organizations }: P
                         </div>
                         <button
                           type="button"
-                          onClick={() => handleRemoveMembership(m.id, editingUser.id)}
-                          className="text-red-500 hover:text-red-700 p-1 cursor-pointer"
+                          onClick={() =>
+                            setConfirmModal({
+                              type: "REMOVE_MEMBERSHIP",
+                              membershipId: m.id,
+                              userId: editingUser.id,
+                              userName: editingUser.displayName,
+                              orgName: m.orgName,
+                              role: m.role,
+                            })
+                          }
+                          className="text-red-500 hover:text-red-700 p-1 rounded-md hover:bg-red-50 transition-colors cursor-pointer"
                           title="Hapus penugasan ini"
                         >
                           <Trash2 className="size-3.5" />
@@ -761,6 +819,145 @@ export function RoleManagementClient({ initialUsers, metrics, organizations }: P
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Konfirmasi Tindakan Destruktif */}
+      {confirmModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="confirm-dialog-title"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/45 p-4 backdrop-blur-xs animate-in fade-in duration-150"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !isPending) {
+              setConfirmModal(null);
+            }
+          }}
+        >
+          <div
+            className="w-full max-w-[440px] rounded-2xl border border-[#D6E2DF] bg-white p-6 shadow-2xl animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header dengan Icon Warning Destruktif */}
+            <div className="flex items-start gap-3.5 pb-4 border-b border-[#F0F1F3]">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-red-50 border border-red-100 text-red-600 shadow-2xs">
+                <AlertTriangle className="size-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 id="confirm-dialog-title" className="text-base font-bold text-[#102A33]">
+                  {confirmModal.type === "REMOVE_MEMBERSHIP"
+                    ? "Hapus Penugasan Organisasi?"
+                    : "Cabut Akses Akun Pengguna?"}
+                </h3>
+                <p className="mt-1 text-xs leading-relaxed text-[#587078]">
+                  {confirmModal.type === "REMOVE_MEMBERSHIP"
+                    ? "Tindakan ini akan mencabut peran dan hak akses pengguna pada organisasi terpilih."
+                    : "Pengguna tidak akan dapat masuk ke sistem internal hingga statusnya diaktifkan kembali oleh administrator."}
+                </p>
+              </div>
+              <button
+                type="button"
+                disabled={isPending}
+                onClick={() => setConfirmModal(null)}
+                className="text-[#858D9D] hover:text-[#102A33] transition-colors p-1 rounded-lg hover:bg-gray-100 cursor-pointer disabled:opacity-50"
+                aria-label="Tutup dialog"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            {/* Context Card: Preview Detail Data Yang Ditindak */}
+            {confirmModal.type === "REMOVE_MEMBERSHIP" ? (
+              <div className="my-4 rounded-xl border border-red-100 bg-[#FEF3F2]/60 p-3.5 space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-[#587078] font-medium">Pengguna:</span>
+                  <span className="font-semibold text-[#102A33]">{confirmModal.userName}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-[#587078] font-medium">Organisasi:</span>
+                  <span className="font-semibold text-[#102A33]">{confirmModal.orgName}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-[#587078] font-medium">Peran Dicabut:</span>
+                  <span
+                    className={cn(
+                      "inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold border",
+                      ROLE_LABELS[confirmModal.role]?.badge ??
+                        "bg-gray-100 text-gray-800 border-gray-200",
+                    )}
+                  >
+                    {ROLE_LABELS[confirmModal.role]?.label ?? confirmModal.role}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="my-4 rounded-xl border border-red-100 bg-[#FEF3F2]/60 p-3.5 space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-[#587078] font-medium">Nama Pengguna:</span>
+                  <span className="font-semibold text-[#102A33]">
+                    {confirmModal.user.displayName}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-[#587078] font-medium">Email / Akun:</span>
+                  <span className="font-mono text-[11px] text-[#587078]">
+                    {confirmModal.user.email || "-"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-[#587078] font-medium">Status Saat Ini:</span>
+                  <span className="inline-flex items-center rounded-md border border-[#A6F4C5] bg-[#ECFDF3] px-2 py-0.5 text-[11px] font-semibold text-[#027A48]">
+                    Aktif
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Warning Callout Box */}
+            <div className="flex items-center gap-2 rounded-lg bg-[#FFF4ED] border border-[#FFD6AE] px-3 py-2 text-[11px] text-[#B54708]">
+              <AlertTriangle className="size-3.5 shrink-0 text-[#D92D20]" />
+              <span>
+                {confirmModal.type === "REMOVE_MEMBERSHIP"
+                  ? "Pengguna tidak dapat lagi mengelola batch atau data operasional di organisasi ini."
+                  : "Akses sesi aktif pengguna akan segera diputus saat verifikasi berikutnya."}
+              </span>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="mt-5 flex items-center justify-end gap-2.5 pt-3 border-t border-[#F0F1F3]">
+              <button
+                type="button"
+                disabled={isPending}
+                onClick={() => setConfirmModal(null)}
+                className="rounded-xl border border-[#D0D5DD] bg-white px-4 py-2.5 text-xs font-semibold text-[#344054] hover:bg-[#F9FAFB] active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                disabled={isPending}
+                onClick={handleConfirmAction}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-[#D92D20] hover:bg-[#B42318] px-4 py-2.5 text-xs font-semibold text-white shadow-xs active:scale-[0.98] transition-all cursor-pointer disabled:opacity-60"
+              >
+                {isPending ? (
+                  <>
+                    <Loader2 className="size-3.5 animate-spin" />
+                    <span>Memproses…</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="size-3.5" />
+                    <span>
+                      {confirmModal.type === "REMOVE_MEMBERSHIP"
+                        ? "Ya, Hapus Penugasan"
+                        : "Ya, Cabut Akses"}
+                    </span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

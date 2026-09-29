@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Sparkles, Shield, ChevronDown, Check, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 type RoleOption = "PRODUCER_ADMIN" | "DISTRIBUTOR_ADMIN" | "RETAILER_ADMIN" | "FACTORY_STAFF";
 
@@ -52,7 +53,11 @@ const ROLES: RoleMeta[] = [
   },
 ];
 
-export function DemoLoginCard() {
+interface DemoLoginCardProps {
+  className?: string;
+}
+
+export function DemoLoginCard({ className }: DemoLoginCardProps = {}) {
   const router = useRouter();
   const [selectedRole, setSelectedRole] = useState<RoleOption>("PRODUCER_ADMIN");
   const [showOptions, setShowOptions] = useState(false);
@@ -92,7 +97,12 @@ export function DemoLoginCard() {
   };
 
   return (
-    <div className="rounded-2xl border border-blue-200/80 bg-gradient-to-b from-blue-50/70 to-indigo-50/40 p-4 shadow-sm">
+    <div
+      className={cn(
+        "rounded-2xl border border-blue-200/80 bg-gradient-to-b from-blue-50/70 to-indigo-50/40 p-4 shadow-sm",
+        className,
+      )}
+    >
       {/* Top Banner Tag */}
       <div className="flex items-center justify-between gap-2 pb-3 border-b border-blue-100">
         <div className="inline-flex items-center gap-1.5 rounded-full bg-blue-600/10 px-2.5 py-0.5 text-xs font-semibold text-blue-700">

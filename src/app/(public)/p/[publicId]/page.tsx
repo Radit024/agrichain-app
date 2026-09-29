@@ -4,7 +4,7 @@ import { getPublicBatchByPublicId, type PublicBatchView } from "@/server/actions
 import { getDbAdapter } from "@/server/db/adapter";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { CheckCircle2, ChevronLeft, Info } from "lucide-react";
+import { CheckCircle2, ChevronLeft, ExternalLink, Info, ShieldCheck } from "lucide-react";
 import {
   ConditionStatusBadge,
   DataQualityStatusBadge,
@@ -135,6 +135,40 @@ export default async function PublicBatchPage({
             </ol>
           </MotionCard>
         </StaggerItem>
+
+        {/* Verifikasi On-Chain di Scanner */}
+        {batch.chainTxHash ? (
+          <StaggerItem>
+            <MotionCard
+              className="rounded-xl border border-border bg-card p-4 transition-all duration-200 hover:border-[#D0D5DD] hover:shadow-[0_4px_12px_rgba(0,0,0,0.04)]"
+              aria-label="Verifikasi blockchain"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="size-4 text-[#1570EF]" />
+                  <h2 className="text-sm font-semibold text-ink">Verifikasi On-Chain</h2>
+                </div>
+                <a
+                  href={`https://amoy.polygonscan.com/tx/${batch.chainTxHash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs font-medium text-[#1570EF] hover:underline"
+                >
+                  Cek di Scanner
+                  <ExternalLink className="size-3" />
+                </a>
+              </div>
+              <p className="mt-2 text-xs leading-5 text-ink-muted">
+                Catatan integritas batch ini telah terverifikasi dan tercatat pada buku besar
+                terdistribusi Polygon Amoy.
+              </p>
+              <div className="mt-3 flex items-center justify-between rounded-lg bg-surface-muted p-2.5">
+                <span className="text-[11px] font-medium text-ink-muted">Hash Transaksi:</span>
+                <TraceId value={batch.chainTxHash} isTx={true} label="Tx Hash" />
+              </div>
+            </MotionCard>
+          </StaggerItem>
+        ) : null}
 
         {/* Batasan informasi — persisten */}
         <StaggerItem>

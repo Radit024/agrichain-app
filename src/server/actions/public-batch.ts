@@ -22,6 +22,7 @@ export interface PublicBatchView {
     toStage: number;
     confirmedAt: string;
   }>;
+  chainTxHash?: string | null;
   source: "SIMULATOR"; // label wajib (PRD)
 }
 
@@ -54,6 +55,14 @@ export async function getPublicBatchByPublicId(
     [publicId],
   );
 
+  const txRow = await db.query<{ chain_tx_hash: string | null }>(
+    `select chain_tx_hash from transaction_references
+     where batch_id = (select id from batches where public_id = $1)
+       and chain_tx_hash is not null
+     order by created_at desc limit 1`,
+    [publicId],
+  );
+
   return {
     publicId: b.public_id,
     distributionStatus: b.distribution_status as PublicBatchView["distributionStatus"],
@@ -68,6 +77,7 @@ export async function getPublicBatchByPublicId(
       toStage: t.to_stage,
       confirmedAt: t.confirmed_at,
     })),
+    chainTxHash: txRow[0]?.chain_tx_hash ?? null,
     source: "SIMULATOR",
   };
 }

@@ -157,7 +157,7 @@ export default async function BatchDetailPage({
                     </Row>
                     {batch.chainTxHash ? (
                       <Row label="Tx terakhir">
-                        <TraceId value={batch.chainTxHash} label="Hash transaksi" />
+                        <TraceId value={batch.chainTxHash} isTx={true} label="Hash transaksi" />
                       </Row>
                     ) : null}
                     <p className="text-xs leading-4 text-ink-muted">
@@ -436,6 +436,22 @@ export default async function BatchDetailPage({
                       <Row label="Menuju stage">
                         {batch.pendingIntent.toStage === 1 ? "Distributor" : "Retailer"}
                       </Row>
+                      {batch.pendingIntent.senderName ? (
+                        <Row label="Petugas pengirim">
+                          {batch.pendingIntent.senderName}
+                          {batch.pendingIntent.senderOrgName
+                            ? ` (${batch.pendingIntent.senderOrgName})`
+                            : ""}
+                        </Row>
+                      ) : null}
+                      {batch.pendingIntent.recipientName ? (
+                        <Row label="Petugas penerima">
+                          {batch.pendingIntent.recipientName}
+                          {batch.pendingIntent.recipientOrgName
+                            ? ` (${batch.pendingIntent.recipientOrgName})`
+                            : ""}
+                        </Row>
+                      ) : null}
                       <Row label="Kedaluwarsa">{formatDateTime(batch.pendingIntent.expiresAt)}</Row>
                       <p className="text-xs text-ink-muted">
                         Kelola konfirmasi/pembatalan dari halaman Serah-terima.
@@ -484,19 +500,36 @@ export default async function BatchDetailPage({
                       </span>
                     </li>
                     {batch.handoffs.map((h, i) => (
-                      <li key={i} className="flex items-center justify-between gap-3 py-2.5">
-                        <span>
-                          Serah-terima {stageLabel(h.fromStage)} → {stageLabel(h.toStage)}
-                        </span>
-                        <span className="text-xs text-ink-muted">
-                          {formatDateTime(h.confirmedAt)}
-                        </span>
+                      <li
+                        key={i}
+                        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-3 py-2.5"
+                      >
+                        <div>
+                          <span>
+                            Serah-terima {stageLabel(h.fromStage)} → {stageLabel(h.toStage)}
+                          </span>
+                          {h.senderName || h.recipientName ? (
+                            <p className="text-xs text-ink-muted">
+                              {h.senderName ? `Oleh: ${h.senderName}` : ""}
+                              {h.senderName && h.recipientName ? " → " : ""}
+                              {h.recipientName ? `Diterima: ${h.recipientName}` : ""}
+                            </p>
+                          ) : null}
+                        </div>
+                        <div className="flex items-center gap-3">
+                          {h.chainTxHash ? (
+                            <TraceId value={h.chainTxHash} isTx={true} label="Tx Serah-terima" />
+                          ) : null}
+                          <span className="text-xs text-ink-muted shrink-0">
+                            {formatDateTime(h.confirmedAt)}
+                          </span>
+                        </div>
                       </li>
                     ))}
                     {batch.chainTxHash ? (
                       <li className="flex flex-wrap items-center justify-between gap-3 py-2.5">
                         <span>Transaksi terakhir</span>
-                        <TraceId value={batch.chainTxHash} label="Hash transaksi" />
+                        <TraceId value={batch.chainTxHash} isTx={true} label="Hash transaksi" />
                       </li>
                     ) : null}
                   </ul>

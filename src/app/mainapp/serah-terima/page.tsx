@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import Link from "next/link";
-import { Filter, History } from "lucide-react";
+import { ExternalLink, Filter, History } from "lucide-react";
 import { APP_SESSION_COOKIE, readAppSession } from "@/server/auth/app-session";
 import { getDbAdapter } from "@/server/db/adapter";
 import { listHandoffs, listHandoffableBatches } from "@/server/queries/internal";
@@ -125,13 +125,16 @@ export default async function HandoffPage() {
                   Batch
                 </TableHead>
                 <TableHead className="py-3.5 px-4 font-normal text-xs text-[#858D9D]">
-                  Asal → Tujuan
+                  Asal → Tujuan & Petugas
                 </TableHead>
                 <TableHead className="py-3.5 px-4 font-normal text-xs text-[#858D9D]">
                   Rute Pengiriman
                 </TableHead>
                 <TableHead className="py-3.5 px-4 font-normal text-xs text-[#858D9D]">
                   Status
+                </TableHead>
+                <TableHead className="py-3.5 px-4 font-normal text-xs text-[#858D9D]">
+                  Bukti On-Chain
                 </TableHead>
                 <TableHead className="py-3.5 px-4 font-normal text-xs text-[#858D9D]">
                   Kedaluwarsa
@@ -162,15 +165,50 @@ export default async function HandoffPage() {
                         </Link>
                       </TableCell>
                       <TableCell className="py-4 px-4 text-sm text-[#5D6679]">
-                        {r.senderOrgName}
-                        <span className="mx-1 text-[#D0D5DD]">→</span>
-                        {r.recipientOrgName}
+                        <div className="font-medium text-[#1D2939]">
+                          {r.senderOrgName}
+                          <span className="mx-1 text-[#D0D5DD]">→</span>
+                          {r.recipientOrgName}
+                        </div>
+                        <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-[#858D9D]">
+                          <span className="inline-flex items-center gap-1">
+                            <span>Pengirim:</span>
+                            <span className="font-medium text-[#344054]">
+                              {r.senderUserName || "Staf Fasilitas"}
+                            </span>
+                          </span>
+                          <span className="text-[#D0D5DD]">•</span>
+                          <span className="inline-flex items-center gap-1">
+                            <span>Penerima:</span>
+                            <span className="font-medium text-[#344054]">
+                              {r.recipientUserName || "Mitra Ditunjuk"}
+                            </span>
+                          </span>
+                        </div>
                       </TableCell>
                       <TableCell className="py-4 px-4 text-xs text-[#5D6679]">
                         {stageLabel(r.fromStage, r.toStage)}
                       </TableCell>
                       <TableCell className="py-4 px-4 text-xs">
                         <HandoffIntentBadge value={r.status as HandoffIntentBadgeValue} />
+                      </TableCell>
+                      <TableCell className="py-4 px-4 text-xs">
+                        {r.chainTxHash ? (
+                          <a
+                            href={`https://amoy.polygonscan.com/tx/${r.chainTxHash}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 font-mono text-[11px] text-[#1570EF] hover:underline"
+                            title="Buka di Polygonscan Blockchain Scanner"
+                          >
+                            <span>
+                              {r.chainTxHash.slice(0, 6)}...{r.chainTxHash.slice(-4)}
+                            </span>
+                            <ExternalLink className="size-3" />
+                          </a>
+                        ) : (
+                          <span className="text-[#858D9D] text-xs font-mono">-</span>
+                        )}
                       </TableCell>
                       <TableCell className="py-4 px-4 text-xs text-[#5D6679] tnum">
                         {formatDateTime(r.expiresAt)}
@@ -192,7 +230,7 @@ export default async function HandoffPage() {
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="py-10 text-center text-sm text-[#858D9D]">
+                  <TableCell colSpan={8} className="py-10 text-center text-sm text-[#858D9D]">
                     Belum ada serah-terima tercatat. Klik{" "}
                     <span className="font-medium text-[#1570EF]">Catat Serah-terima</span> untuk
                     memulai.

@@ -398,7 +398,7 @@ export interface BatchDetail {
       toleranceSeconds: number | null;
       severity: string;
     }>;
-  };
+  } | null;
   latestEvaluation: {
     conditionStatus: string;
     dataQualityStatus: string;
@@ -431,12 +431,19 @@ export interface BatchDetail {
     toStage: number;
     confirmedAt: string;
     pointName: string | null;
+    senderName?: string | null;
+    recipientName?: string | null;
+    chainTxHash?: string | null;
   }>;
   pendingIntent: {
     id: string;
     toStage: number;
     expiresAt: string;
     status: string;
+    senderName?: string | null;
+    senderOrgName?: string | null;
+    recipientName?: string | null;
+    recipientOrgName?: string | null;
   } | null;
   chainSyncStatus: string;
   chainTxHash: string | null;
@@ -531,9 +538,20 @@ export async function getBatchDetail(
     to_stage: number;
     confirmed_at: string;
     point_name: string | null;
+    sender_name: string | null;
+    recipient_name: string | null;
+    chain_tx_hash: string | null;
   }>(
-    `select r.from_stage, r.to_stage, r.confirmed_at, p.public_name as point_name
+    `select r.from_stage, r.to_stage, r.confirmed_at, p.public_name as point_name,
+            su.display_name as sender_name,
+            coalesce(cu.display_name, ru.display_name) as recipient_name,
+            tr.chain_tx_hash
      from handoff_records r
+     left join handoff_intents i on i.id = r.intent_id
+     left join app_users su on su.id = i.sender_user_id
+     left join app_users ru on lower(ru.wallet_address) = lower(r.recipient_wallet)
+     left join transaction_references tr on tr.intent_id = r.intent_id and tr.event_type = 'HANDOFF_CONFIRMED'
+     left join app_users cu on cu.id = tr.submitted_by
      left join distribution_points p on p.id = (
        select point_id from access_codes ac where ac.batch_id = r.batch_id
        order by ac.valid_until desc limit 1)
@@ -546,9 +564,22 @@ export async function getBatchDetail(
     to_stage: number;
     expires_at: string;
     status: string;
+    sender_name: string | null;
+    sender_org_name: string | null;
+    recipient_name: string | null;
+    recipient_org_name: string | null;
   }>(
-    `select id, to_stage, expires_at, status from handoff_intents
-     where batch_id = $1 and status = 'PENDING' limit 1`,
+    `select i.id, i.to_stage, i.expires_at, i.status,
+            su.display_name as sender_name,
+            so.name as sender_org_name,
+            ru.display_name as recipient_name,
+            ro.name as recipient_org_name
+     from handoff_intents i
+     left join app_users su on su.id = i.sender_user_id
+     left join app_users ru on lower(ru.wallet_address) = lower(i.recipient_wallet)
+     left join orgs so on so.id = (select org_id from batches where id = $1)
+     left join orgs ro on ro.id = i.recipient_org_id
+     where i.batch_id = $1 and i.status = 'PENDING' limit 1`,
     [batchId],
   );
 
@@ -643,6 +674,9 @@ export async function getBatchDetail(
       toStage: h.to_stage,
       confirmedAt: h.confirmed_at,
       pointName: h.point_name,
+      senderName: h.sender_name ?? null,
+      recipientName: h.recipient_name ?? null,
+      chainTxHash: h.chain_tx_hash ?? null,
     })),
     pendingIntent: intents[0]
       ? {
@@ -650,10 +684,12 @@ export async function getBatchDetail(
           toStage: intents[0].to_stage,
           expiresAt: intents[0].expires_at,
           status: intents[0].status,
+          senderName: intents[0].sender_name ?? null,
+          senderOrgName: intents[0].sender_org_name ?? null,
+          recipientName: intents[0].recipient_name ?? null,
+          recipientOrgName: intents[0].recipient_org_name ?? null,
         }
       : null,
-    chainSyncStatus: b.chain_sync_status,
-    chainTxHash: tx[0]?.chain_tx_hash ?? null,
   };
 }
 
@@ -669,6 +705,9 @@ export interface HandoffListItem {
   toStage: number;
   senderOrgName: string;
   recipientOrgName: string;
+  senderUserName: string | null;
+  recipientUserName: string | null;
+  chainTxHash: string | null;
   status: string;
   initiatedAt: string;
   confirmedAt: string | null;
@@ -695,6 +734,9 @@ export async function listHandoffs(db: DbAdapter, session: Session): Promise<Han
     recipient_org: string;
     sender_org_id: string;
     recipient_org_id: string;
+    sender_user_name: string | null;
+    recipient_user_name: string | null;
+    chain_tx_hash: string | null;
     status: string;
     initiated_at: string;
     confirmed_at: string | null;
@@ -705,12 +747,25 @@ export async function listHandoffs(db: DbAdapter, session: Session): Promise<Han
     `select i.id, i.batch_id, b.batch_code, i.from_stage, i.to_stage,
             so.name as sender_org, ro.name as recipient_org,
             b.org_id as sender_org_id, i.recipient_org_id,
+            su.display_name as sender_user_name,
+            coalesce(
+              (select cu.display_name from transaction_references tr join app_users cu on cu.id = tr.submitted_by where tr.intent_id = i.id and tr.event_type = 'HANDOFF_CONFIRMED' limit 1),
+              ru.display_name
+            ) as recipient_user_name,
+            (
+              select tr.chain_tx_hash
+              from transaction_references tr
+              where tr.intent_id = i.id and tr.chain_tx_hash is not null
+              order by tr.created_at desc limit 1
+            ) as chain_tx_hash,
             i.status, i.initiated_at, i.confirmed_at, i.expires_at,
             i.sender_wallet, i.recipient_wallet
      from handoff_intents i
      join batches b on b.id = i.batch_id
      join orgs so on so.id = b.org_id
      join orgs ro on ro.id = i.recipient_org_id
+     left join app_users su on su.id = i.sender_user_id
+     left join app_users ru on lower(ru.wallet_address) = lower(i.recipient_wallet)
      where b.org_id = any($1::uuid[]) or i.recipient_org_id = any($1::uuid[]) or b.custodian_org_id = any($1::uuid[])
      order by i.initiated_at desc limit 100`,
     [orgIds],
@@ -743,6 +798,9 @@ export async function listHandoffs(db: DbAdapter, session: Session): Promise<Han
       toStage: r.to_stage,
       senderOrgName: r.sender_org,
       recipientOrgName: r.recipient_org,
+      senderUserName: r.sender_user_name ?? null,
+      recipientUserName: r.recipient_user_name ?? null,
+      chainTxHash: r.chain_tx_hash ?? null,
       status: r.status,
       initiatedAt: r.initiated_at,
       confirmedAt: r.confirmed_at,

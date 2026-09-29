@@ -1,11 +1,12 @@
 import { ArrowRight, CheckCircle2, Circle, Clock, Factory, Store, Truck } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { TraceId } from "@/components/status/trace-id";
 
 /**
  * HandoffTimeline (DESIGN.md §9.3): Pabrik → Distributor → Retailer.
  * Status "Menunggu penerimaan" tampil sebelum stage berpindah; setelah
- * konfirmasi tampil role/timestamp/lokasi tersanitasi. Data hilang
- * ditampilkan eksplisit "Belum tercatat".
+ * konfirmasi tampil role/timestamp/lokasi tersanitasi, serta nama pengirim,
+ * penerima, dan bukti transaksi on-chain ke scanner bila ada.
  */
 
 const stageMeta = [
@@ -19,6 +20,9 @@ export interface HandoffEvent {
   toStage: number;
   confirmedAt: string;
   pointName?: string | null;
+  senderName?: string | null;
+  recipientName?: string | null;
+  chainTxHash?: string | null;
 }
 
 export function HandoffTimeline({
@@ -39,7 +43,6 @@ export function HandoffTimeline({
         const isCurrent = custodyStage === i;
         const isPending = pendingToStage === i;
         const passed = custodyStage >= i;
-        const Icon = stage.icon;
 
         return (
           <li key={stage.label} className="relative flex gap-3 pb-6 last:pb-0">
@@ -81,10 +84,31 @@ export function HandoffTimeline({
             <div className="min-w-0 pt-1">
               <p className="text-sm font-semibold text-ink">{stage.label}</p>
               {confirmedEvent ? (
-                <p className="mt-0.5 text-xs leading-4 text-ink-muted">
-                  Diterima {formatDateTime(confirmedEvent.confirmedAt)}
-                  {confirmedEvent.pointName ? ` — ${confirmedEvent.pointName}` : ""}
-                </p>
+                <div className="space-y-0.5 mt-0.5">
+                  <p className="text-xs leading-4 text-ink-muted">
+                    Diterima {formatDateTime(confirmedEvent.confirmedAt)}
+                    {confirmedEvent.pointName ? ` — ${confirmedEvent.pointName}` : ""}
+                  </p>
+                  {confirmedEvent.senderName || confirmedEvent.recipientName ? (
+                    <p className="text-[11px] leading-4 text-ink-muted">
+                      {confirmedEvent.senderName ? `Pengirim: ${confirmedEvent.senderName}` : ""}
+                      {confirmedEvent.senderName && confirmedEvent.recipientName ? " • " : ""}
+                      {confirmedEvent.recipientName
+                        ? `Penerima: ${confirmedEvent.recipientName}`
+                        : ""}
+                    </p>
+                  ) : null}
+                  {confirmedEvent.chainTxHash ? (
+                    <div className="pt-0.5 flex items-center gap-1.5">
+                      <span className="text-[11px] text-ink-muted">Tx:</span>
+                      <TraceId
+                        value={confirmedEvent.chainTxHash}
+                        isTx={true}
+                        label="Tx Serah-terima"
+                      />
+                    </div>
+                  ) : null}
+                </div>
               ) : isCurrent ? (
                 <p className="mt-0.5 text-xs leading-4 text-ink-muted">Kustodian saat ini</p>
               ) : isPending ? (
